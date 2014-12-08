@@ -1,3 +1,6 @@
+#' @title Inverse logit for matrices
+#' 
+#' @description
 #' Apply the inverse logit function to a matrix, element-wise. It 
 #' generalizes the \code{inv.logit} function from the \code{gtools} 
 #' library to matrices
@@ -16,7 +19,11 @@ inv.logit.mat <- function(x, min = 0, max = 1) {
   p * (max - min) + min
 }
 
-#' @title Perform logistic principal component analysis on a binary matrix
+#' @title Logistic Principal Component Analysis
+#' 
+#' @description 
+#' Dimension reduction for binary data by extending Pearson's
+#' PCA formulation to minimize Binomial deviance
 #' 
 #' @param dat matrix with all binary entries
 #' @param k number of principal components to return
@@ -33,6 +40,16 @@ inv.logit.mat <- function(x, min = 0, max = 1) {
 #'   with first \code{k} right singular vectors of \code{dat}
 #' @param start_mu starting value for mu, if \code{main_effects = TRUE}
 #' @param main_effects logical; whether to include main effects in the model
+#' 
+#' @return An S3 object of class \code{lpca} which is a list with the
+#' following components:
+#' \item{mu}{the main effects}
+#' \item{U}{a \code{k}-dimentional orthonormal matrix with the loadings}
+#' \item{PCs}{the princial components}
+#' \item{M}{the same parameter as inputed}
+#' \item{iters}{number of iterations required for convergence}
+#' \item{loss_trace}{the loss trace of the algorithm. Should be non-increasing}
+#' 
 #' @examples
 #' # construct a low rank matrix in the logit scale
 #' rows = 100
@@ -53,7 +70,7 @@ inv.logit.mat <- function(x, min = 0, max = 1) {
 logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
                              max_iters = 1000, conv_criteria = 1e-5, random_start = FALSE,
                              start_U, start_mu, main_effects = TRUE) {
-  # change B to U. change .'s to _'s. better name for k and dat.
+  # better name for k and dat.
   use_irlba = use_irlba && requireNamespace("irlba", quietly = TRUE)
   q = as.matrix(2 * dat - 1)
   q[is.na(q)] <- 0 # forces x to be equal to theta when data is missing
@@ -74,23 +91,23 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   # Initialize #
   ##################
   if (!missing(start_U)) {
-    B = sweep(start_U, 2, sqrt(colSums(start_U^2)), "/")
+    U = sweep(start_U, 2, sqrt(colSums(start_U^2)), "/")
   } else if (random_start) {
-    B = matrix(rnorm(d * k), d, k)
-    B = qr.Q(qr(B))
+    U = matrix(rnorm(d * k), d, k)
+    U = qr.Q(qr(U))
   } else {
     if (use_irlba) {
       udv = irlba(scale(q, center = main_effects, scale = FALSE), nu = k, nv = k)
     } else {
       udv = svd(scale(q, center = main_effects, scale = FALSE))
     }
-    B = matrix(udv$v[, 1:k], d, k)
+    U = matrix(udv$v[, 1:k], d, k)
   }
   
   etaTeta = t(eta) %*% eta
   
   loss_trace = numeric(max_iters + 1)
-  theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% B %*% t(B)
+  theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% U %*% t(U)
   loglike = sum(log(inv.logit.mat(q * (theta)))[q != 0])
   # loglike=sum(dat*theta)-sum(pmax(0,theta))
   loss_trace[1] = (-loglike) / sum(q!=0)
@@ -103,12 +120,12 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   
   for (m in 1:max_iters) {
     gc()
-    last_B = B
+    last_U = U
     last_mu = mu
     
     X = as.matrix(theta + 4 * q * (1 - inv.logit.mat(q * theta)))
     if (main_effects) {
-      mu = as.numeric(colMeans(X - eta %*% B %*% t(B)))
+      mu = as.numeric(colMeans(X - eta %*% U %*% t(U)))
     }
     
     mat_temp = t(scale(eta, center = mu, scale = FALSE)) %*% X
@@ -116,15 +133,15 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     repeat {
       if (use_irlba) {
         udv = irlba(mat_temp, nu=k, nv=k, adjust=3)
-        B = matrix(udv$u[, 1:k], d, k)
+        U = matrix(udv$u[, 1:k], d, k)
       } else {
         eig = eigen(mat_temp, symmetric=TRUE)
-        B = matrix(eig$vectors[, 1:k], d, k)
+        U = matrix(eig$vectors[, 1:k], d, k)
       }
       
-      theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% B %*% t(B)
+      theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% U %*% t(U)
       this_loglike = sum(log(inv.logit.mat(q * theta))[q != 0])
-      # this.loglike=sum(dat*theta)-sum(pmax(0,theta))
+      # this_loglike=sum(dat*theta)-sum(pmax(0,theta))
       
       if (!use_irlba | this_loglike>=loglike) {
         loglike = this_loglike
@@ -152,22 +169,22 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   
   # test if loss function increases
   if ((loss_trace[m + 1] - loss_trace[m]) > (1e-10)) {
-    B = last_B
+    U = last_U
     mu = last_mu
     m = m - 1
     
-    theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% B %*% t(B)
+    theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% U %*% t(U)
     loglike = sum(log(inv.logit.mat(q * theta))[q!=0])
     warning("Algorithm stopped because deviance increased.\nThis should not happen!")
   }
   gc()
   
   object <- list(mu = mu,
-                 B = B,
+                 U = U,
+                 PCs = scale(eta, center = mu, scale = FALSE) %*% U,
+                 M = M,
                  iters = m,
-                 loss_trace = loss_trace[1:(m + 1)],
-                 PCs = scale(eta, center = mu, scale = FALSE) %*% B,
-                 M = M)
+                 loss_trace = loss_trace[1:(m + 1)])
   class(object) <- "lpca"
   object
 }
@@ -200,7 +217,7 @@ predict.lpca <- function(object, newdata) {
     PCs = object$PCs
   } else {
     eta = ((as.matrix(newdata) * 2) - 1) * object$M
-    PCs = scale(eta, center = object$mu, scale = FALSE) %*% object$B
+    PCs = scale(eta, center = object$mu, scale = FALSE) %*% object$U
   }
   PCs
 }
