@@ -13,10 +13,7 @@
 #' inv.logit.mat(mat)
 #' @export
 inv.logit.mat <- function(x, min = 0, max = 1) {
-  p <- exp(x) / (1 + exp(x))
-  which.large = is.na(p) & !is.na(x)
-  p[which.large] = 1
-  p * (max - min) + min
+  .Call(inv_logit_mat, x, min, max)
 }
 
 #' @title Logistic Principal Component Analysis

@@ -1,2 +1,7 @@
+useDynLib(logisticPCA,
+  inv_logit_mat
+)
+
 S3method(predict,lpca)
 exportPattern("^[[:alpha:]]+")
+
