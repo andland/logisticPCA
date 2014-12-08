@@ -94,7 +94,7 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     U = qr.Q(qr(U))
   } else {
     if (use_irlba) {
-      udv = irlba(scale(q, center = main_effects, scale = FALSE), nu = k, nv = k)
+      udv = irlba::irlba(scale(q, center = main_effects, scale = FALSE), nu = k, nv = k)
     } else {
       udv = svd(scale(q, center = main_effects, scale = FALSE))
     }
@@ -129,7 +129,7 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     mat_temp = mat_temp + t(mat_temp) - etaTeta + n * outer(mu, mu)
     repeat {
       if (use_irlba) {
-        udv = irlba(mat_temp, nu=k, nv=k, adjust=3)
+        udv = irlba::irlba(mat_temp, nu=k, nv=k, adjust=3)
         U = matrix(udv$u[, 1:k], d, k)
       } else {
         eig = eigen(mat_temp, symmetric=TRUE)
@@ -192,6 +192,7 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
 #' @param object A logistic PCA object
 #' @param newdata Binary matrix to apply logistic PCA on. If missing, will return PCs 
 #'  that the data \code{object} was fit on
+#' @param ... Additional arguments.
 #' @examples
 #' # construct a low rank matrices in the logit scale
 #' rows = 100
@@ -209,7 +210,7 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
 #' 
 #' PCs = predict(lpca, mat_new)
 #' @export
-predict.lpca <- function(object, newdata) {
+predict.lpca <- function(object, newdata, ...) {
   if (missing(newdata)) {
     PCs = object$PCs
   } else {
