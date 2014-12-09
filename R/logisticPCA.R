@@ -101,7 +101,7 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     U = matrix(udv$v[, 1:k], d, k)
   }
   
-  etaTeta = t(eta) %*% eta
+  etaTeta = crossprod(eta)
   
   loss_trace = numeric(max_iters + 1)
   theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% U %*% t(U)
@@ -116,7 +116,6 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   }
   
   for (m in 1:max_iters) {
-    gc()
     last_U = U
     last_mu = mu
     
@@ -127,6 +126,8 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     
     mat_temp = t(scale(eta, center = mu, scale = FALSE)) %*% X
     mat_temp = mat_temp + t(mat_temp) - etaTeta + n * outer(mu, mu)
+    
+    
     repeat {
       if (use_irlba) {
         udv = irlba::irlba(mat_temp, nu=k, nv=k, adjust=3)
@@ -136,8 +137,8 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
         U = matrix(eig$vectors[, 1:k], d, k)
       }
       
-      theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% U %*% t(U)
-      this_loglike = sum(log(inv.logit.mat(q * theta))[q != 0])
+      theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% tcrossprod(U)
+      this_loglike <- .Call(compute_loglik, q, theta)
       # this_loglike=sum(dat*theta)-sum(pmax(0,theta))
       
       if (!use_irlba | this_loglike>=loglike) {

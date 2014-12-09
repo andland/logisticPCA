@@ -3,4 +3,4 @@
 S3method(predict,lpca)
 export(inv.logit.mat)
 export(logisticPCA)
-useDynLib(logisticPCA, inv_logit_mat)
+useDynLib(logisticPCA, inv_logit_mat, compute_loglik)
