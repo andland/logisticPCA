@@ -13,10 +13,7 @@
 #' inv.logit.mat(mat)
 #' @export
 inv.logit.mat <- function(x, min = 0, max = 1) {
-  p <- exp(x) / (1 + exp(x))
-  which.large = is.na(p) & !is.na(x)
-  p[which.large] = 1
-  p * (max - min) + min
+  .Call(inv_logit_mat, x, min, max)
 }
 
 #' @title Logistic Principal Component Analysis
@@ -97,14 +94,14 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     U = qr.Q(qr(U))
   } else {
     if (use_irlba) {
-      udv = irlba(scale(q, center = main_effects, scale = FALSE), nu = k, nv = k)
+      udv = irlba::irlba(scale(q, center = main_effects, scale = FALSE), nu = k, nv = k)
     } else {
       udv = svd(scale(q, center = main_effects, scale = FALSE))
     }
     U = matrix(udv$v[, 1:k], d, k)
   }
   
-  etaTeta = t(eta) %*% eta
+  etaTeta = crossprod(eta)
   
   loss_trace = numeric(max_iters + 1)
   theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% U %*% t(U)
@@ -119,7 +116,6 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   }
   
   for (m in 1:max_iters) {
-    gc()
     last_U = U
     last_mu = mu
     
@@ -130,17 +126,19 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     
     mat_temp = t(scale(eta, center = mu, scale = FALSE)) %*% X
     mat_temp = mat_temp + t(mat_temp) - etaTeta + n * outer(mu, mu)
+    
+    
     repeat {
       if (use_irlba) {
-        udv = irlba(mat_temp, nu=k, nv=k, adjust=3)
+        udv = irlba::irlba(mat_temp, nu=k, nv=k, adjust=3)
         U = matrix(udv$u[, 1:k], d, k)
       } else {
         eig = eigen(mat_temp, symmetric=TRUE)
         U = matrix(eig$vectors[, 1:k], d, k)
       }
       
-      theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% U %*% t(U)
-      this_loglike = sum(log(inv.logit.mat(q * theta))[q != 0])
+      theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% tcrossprod(U)
+      this_loglike <- .Call(compute_loglik, q, theta)
       # this_loglike=sum(dat*theta)-sum(pmax(0,theta))
       
       if (!use_irlba | this_loglike>=loglike) {
@@ -195,6 +193,7 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
 #' @param object A logistic PCA object
 #' @param newdata Binary matrix to apply logistic PCA on. If missing, will return PCs 
 #'  that the data \code{object} was fit on
+#' @param ... Additional arguments.
 #' @examples
 #' # construct a low rank matrices in the logit scale
 #' rows = 100
@@ -212,7 +211,7 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
 #' 
 #' PCs = predict(lpca, mat_new)
 #' @export
-predict.lpca <- function(object, newdata) {
+predict.lpca <- function(object, newdata, ...) {
   if (missing(newdata)) {
     PCs = object$PCs
   } else {

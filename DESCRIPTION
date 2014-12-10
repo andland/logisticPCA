@@ -3,11 +3,13 @@ Type: Package
 Title: Dimension reduction techniques for binary data including logistic PCA
 Version: 0.1
 Date: 2014-12-08
+NeedsCompilation: yes
+ByteCompile: yes
 Author: Andrew Landgraf
 Maintainer: Andrew Landgraf <landgraf.5@osu.edu>
 Description: Dimension reduction techniques for binary data including logistic
     PCA
-License: MIT
+License: MIT + file LICENSE
 URL: https://github.com/andland/
 Suggests:
     irlba
