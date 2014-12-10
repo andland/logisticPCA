@@ -106,7 +106,7 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   
   loss_trace = numeric(max_iters + 1)
   theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% U %*% t(U)
-  loglike = sum(log(inv.logit.mat(q * (theta)))[q != 0])
+  loglike <- .Call(compute_loglik, q, theta)
   # loglike=sum(dat*theta)-sum(pmax(0,theta))
   loss_trace[1] = (-loglike) / sum(q!=0)
   ptm <- proc.time()

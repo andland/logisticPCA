@@ -47,7 +47,7 @@
 #' # generate a binary matrix
 #' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 #' 
-#' # run logistic PCA on it
+#' # run logistic SVD on it
 #' lsvd = logisticSVD(mat, k = 1, main_effects = FALSE)
 #' 
 #' # Logistic SVD likely does a better job finding latent features
@@ -102,7 +102,8 @@ logisticSVD <- function(dat, k = 2, quiet = TRUE, max_iters = 1000, conv_crit=1e
   
   # row.names(A) = row.names(dat); row.names(B) = colnames(dat)
   loss_trace = numeric(max_iters + 1)
-  loglike = sum(log(inv.logit.mat(q * (outer(rep(1, n), mu) + tcrossprod(A, B))))[q != 0])
+  theta = outer(rep(1, n), mu) + tcrossprod(A, B)
+  loglike <- .Call(compute_loglik, q, theta)
   loss_trace[1] = -loglike / sum(q!=0)
   ptm <- proc.time()
   if (!quiet) {
@@ -115,7 +116,6 @@ logisticSVD <- function(dat, k = 2, quiet = TRUE, max_iters = 1000, conv_crit=1e
     last_A = A
     last_B = B
     
-    theta = outer(rep(1, n), mu) + tcrossprod(A, B)
     X = as.matrix(theta + 4 * q * (1 - inv.logit.mat(q * theta)))
     if (main_effects) {
       mu = as.numeric(colMeans(X))
@@ -130,7 +130,8 @@ logisticSVD <- function(dat, k = 2, quiet = TRUE, max_iters = 1000, conv_crit=1e
     A = matrix(udv$u[, 1:k], n, k) %*% diag(udv$d[1:k], nrow = k, ncol = k)
     B = matrix(udv$v[, 1:k], d, k)
     
-    loglike = sum(log(inv.logit.mat(q * (outer(rep(1, n), mu) + tcrossprod(A, B))))[q != 0])
+    theta = outer(rep(1, n), mu) + tcrossprod(A, B)
+    loglike <- .Call(compute_loglik, q, theta)
     loss_trace[m+1] = -loglike / sum(q != 0)
     
     if (!quiet) {
