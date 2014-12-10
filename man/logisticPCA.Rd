@@ -52,6 +52,7 @@ PCA formulation to minimize Binomial deviance
 # construct a low rank matrix in the logit scale
 rows = 100
 cols = 10
+set.seed(1)
 mat_logit = outer(rnorm(rows), rnorm(cols))
 
 # generate a binary matrix

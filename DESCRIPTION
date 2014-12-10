@@ -10,6 +10,6 @@ Maintainer: Andrew Landgraf <landgraf.5@osu.edu>
 Description: Dimension reduction techniques for binary data including logistic
     PCA
 License: MIT + file LICENSE
-URL: https://github.com/andland/
+URL: https://github.com/andland/logisticPCA
 Suggests:
     irlba
