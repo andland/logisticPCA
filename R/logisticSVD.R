@@ -13,17 +13,15 @@
 #' @param conv_criteria convergence criteria. The difference between average deviance
 #'   in successive iterations
 #' @param random_start logical; whether to randomly inititalize the parameters. If \code{FALSE},
-#'   function will use an SVD as starting value
-#' @param start_A starting value for the orthoganal matrix. If missing, initializes 
-#'   with first \code{k} left singular vectors of \code{dat}
-#' @param start_B starting value for the orthoganal matrix. If missing, initializes 
-#'   with first \code{k} right singular vectors of \code{dat}
-#' @param start_mu starting value for mu, if \code{main_effects = TRUE}
+#'   algorithm will use an SVD as starting value
+#' @param start_A starting value for the left singular vectors
+#' @param start_B starting value for the right singular vectors
+#' @param start_mu starting value for mu. Only used if \code{main_effects = TRUE}
 #' @param main_effects logical; whether to include main effects in the model
 #' 
 #' @return An S3 object of class \code{lsvd} which is a list with the
 #' following components:
-#' \item{A}{a \code{k}-dimentional orthogonal matrix with the left singular vectors}
+#' \item{A}{a \code{k}-dimentional orthogonal matrix with the scaled left singular vectors}
 #' \item{B}{a \code{k}-dimentional orthonormal matrix with the right singular vectors}
 #' \item{mu}{the main effects}
 #' \item{iters}{number of iterations required for convergence}
@@ -97,7 +95,7 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
     B = start_B
   if (!missing(start_A))
     A = start_A
-  if (!missing(start_mu))
+  if (!missing(start_mu) && main_effects)
     mu = start_mu
   
   # row.names(A) = row.names(x); row.names(B) = colnames(x)
@@ -167,18 +165,17 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
 
 #' @title Predict Logistic SVD left singular values on new data
 #' 
-#' @param object A logistic SVD object
-#' @param newdata Binary matrix to apply logistic SVD on. If missing, will return the
+#' @param object logistic SVD object
+#' @param newdata matrix with all binary entries. If missing, will return the
 #' left singular vectors that the data \code{object} was fit on
 #' @param quiet logical; whether the calculation should give feedback
 #' @param max_iters number of maximum iterations
 #' @param conv_criteria convergence criteria. The difference between average deviance
 #'   in successive iterations
 #' @param random_start logical; whether to randomly inititalize the parameters. If \code{FALSE},
-#'   function will use an SVD as starting value
-#' @param start_A starting value for the orthoganal matrix. If missing, initializes 
-#'   with first \code{k} left singular vectors of \code{dat}
-#' @param ... Additional arguments.
+#'   algorithm implicitly starts \code{A} with 0 matrix
+#' @param start_A starting value for the left singular vectors
+#' @param ... Additional arguments
 #' 
 #' @details
 #' Minimizes binomial deviance for new data by finding the optimal left singular vector
@@ -189,6 +186,7 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
 #' # construct a low rank matrices in the logit scale
 #' rows = 100
 #' cols = 10
+#' set.seed(1)
 #' loadings = rnorm(cols)
 #' mat_logit = outer(rnorm(rows), loadings)
 #' mat_logit_new = outer(rnorm(rows), loadings)

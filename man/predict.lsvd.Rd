@@ -7,9 +7,9 @@
   conv_criteria = 1e-05, random_start = FALSE, start_A, ...)
 }
 \arguments{
-\item{object}{A logistic SVD object}
+\item{object}{logistic SVD object}
 
-\item{newdata}{Binary matrix to apply logistic SVD on. If missing, will return the
+\item{newdata}{matrix with all binary entries. If missing, will return the
 left singular vectors that the data \code{object} was fit on}
 
 \item{quiet}{logical; whether the calculation should give feedback}
@@ -20,12 +20,11 @@ left singular vectors that the data \code{object} was fit on}
 in successive iterations}
 
 \item{random_start}{logical; whether to randomly inititalize the parameters. If \code{FALSE},
-function will use an SVD as starting value}
+algorithm implicitly starts \code{A} with 0 matrix}
 
-\item{start_A}{starting value for the orthoganal matrix. If missing, initializes
-with first \code{k} left singular vectors of \code{dat}}
+\item{start_A}{starting value for the left singular vectors}
 
-\item{...}{Additional arguments.}
+\item{...}{Additional arguments}
 }
 \description{
 Predict Logistic SVD left singular values on new data
@@ -39,6 +38,7 @@ singular vector matrix (\code{B}) are orthonormal.
 # construct a low rank matrices in the logit scale
 rows = 100
 cols = 10
+set.seed(1)
 loadings = rnorm(cols)
 mat_logit = outer(rnorm(rows), loadings)
 mat_logit_new = outer(rnorm(rows), loadings)

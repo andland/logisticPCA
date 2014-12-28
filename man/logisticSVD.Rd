@@ -20,15 +20,13 @@ logisticSVD(x, k = 2, quiet = TRUE, max_iters = 1000,
 in successive iterations}
 
 \item{random_start}{logical; whether to randomly inititalize the parameters. If \code{FALSE},
-function will use an SVD as starting value}
+algorithm will use an SVD as starting value}
 
-\item{start_A}{starting value for the orthoganal matrix. If missing, initializes
-with first \code{k} left singular vectors of \code{dat}}
+\item{start_A}{starting value for the left singular vectors}
 
-\item{start_B}{starting value for the orthoganal matrix. If missing, initializes
-with first \code{k} right singular vectors of \code{dat}}
+\item{start_B}{starting value for the right singular vectors}
 
-\item{start_mu}{starting value for mu, if \code{main_effects = TRUE}}
+\item{start_mu}{starting value for mu. Only used if \code{main_effects = TRUE}}
 
 \item{use_irlba}{logical; if \code{TRUE}, the function uses the irlba package
 to more quickly calculate the SVD}
@@ -38,7 +36,7 @@ to more quickly calculate the SVD}
 \value{
 An S3 object of class \code{lsvd} which is a list with the
 following components:
-\item{A}{a \code{k}-dimentional orthogonal matrix with the left singular vectors}
+\item{A}{a \code{k}-dimentional orthogonal matrix with the scaled left singular vectors}
 \item{B}{a \code{k}-dimentional orthonormal matrix with the right singular vectors}
 \item{mu}{the main effects}
 \item{iters}{number of iterations required for convergence}

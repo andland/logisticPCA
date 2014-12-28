@@ -33,9 +33,8 @@ inv.logit.mat <- function(x, min = 0, max = 1) {
 #'   in successive iterations
 #' @param random_start logical; whether to randomly inititalize the parameters. If \code{FALSE},
 #'   function will use an eigen-decomposition as starting value
-#' @param start_U starting value for the orthoganal matrix. If missing, initializes 
-#'   with first \code{k} right singular vectors of \code{x}
-#' @param start_mu starting value for mu, if \code{main_effects = TRUE}
+#' @param start_U starting value for the orthogonal matrix
+#' @param start_mu starting value for mu. Only used if \code{main_effects = TRUE}
 #' @param main_effects logical; whether to include main effects in the model
 #' 
 #' @return An S3 object of class \code{lpca} which is a list with the
@@ -190,14 +189,15 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
 
 #' @title Predict Logistic PCA scores on new data
 #' 
-#' @param object A logistic PCA object
-#' @param newdata Binary matrix to apply logistic PCA on. If missing, will return PCs 
+#' @param object logistic PCA object
+#' @param newdata matrix with all binary entries. If missing, will return PCs 
 #'  that the data \code{object} was fit on
-#' @param ... Additional arguments.
+#' @param ... Additional arguments
 #' @examples
 #' # construct a low rank matrices in the logit scale
 #' rows = 100
 #' cols = 10
+#' set.seed(1)
 #' loadings = rnorm(cols)
 #' mat_logit = outer(rnorm(rows), loadings)
 #' mat_logit_new = outer(rnorm(rows), loadings)

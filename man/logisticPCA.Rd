@@ -27,10 +27,9 @@ in successive iterations}
 \item{random_start}{logical; whether to randomly inititalize the parameters. If \code{FALSE},
 function will use an eigen-decomposition as starting value}
 
-\item{start_U}{starting value for the orthoganal matrix. If missing, initializes
-with first \code{k} right singular vectors of \code{x}}
+\item{start_U}{starting value for the orthogonal matrix}
 
-\item{start_mu}{starting value for mu, if \code{main_effects = TRUE}}
+\item{start_mu}{starting value for mu. Only used if \code{main_effects = TRUE}}
 
 \item{main_effects}{logical; whether to include main effects in the model}
 }

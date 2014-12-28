@@ -6,12 +6,12 @@
 \method{predict}{lpca}(object, newdata, ...)
 }
 \arguments{
-\item{object}{A logistic PCA object}
+\item{object}{logistic PCA object}
 
-\item{newdata}{Binary matrix to apply logistic PCA on. If missing, will return PCs
+\item{newdata}{matrix with all binary entries. If missing, will return PCs
 that the data \code{object} was fit on}
 
-\item{...}{Additional arguments.}
+\item{...}{Additional arguments}
 }
 \description{
 Predict Logistic PCA scores on new data
@@ -20,6 +20,7 @@ Predict Logistic PCA scores on new data
 # construct a low rank matrices in the logit scale
 rows = 100
 cols = 10
+set.seed(1)
 loadings = rnorm(cols)
 mat_logit = outer(rnorm(rows), loadings)
 mat_logit_new = outer(rnorm(rows), loadings)
