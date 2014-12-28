@@ -3,12 +3,12 @@
 \alias{logisticSVD}
 \title{Logistic Singular Value Decomposition}
 \usage{
-logisticSVD(dat, k = 2, quiet = TRUE, max_iters = 1000,
-  conv_crit = 1e-05, randstart = FALSE, start_A, start_B, start_mu,
-  use_irlba = TRUE, main_effects = TRUE)
+logisticSVD(x, k = 2, quiet = TRUE, max_iters = 1000, conv_crit = 1e-05,
+  randstart = FALSE, start_A, start_B, start_mu, use_irlba = TRUE,
+  main_effects = TRUE)
 }
 \arguments{
-\item{dat}{matrix with all binary entries}
+\item{x}{matrix with all binary entries}
 
 \item{k}{rank of the SVD}
 

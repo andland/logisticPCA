@@ -22,7 +22,7 @@ inv.logit.mat <- function(x, min = 0, max = 1) {
 #' Dimension reduction for binary data by extending Pearson's
 #' PCA formulation to minimize Binomial deviance
 #' 
-#' @param dat matrix with all binary entries
+#' @param x matrix with all binary entries
 #' @param k number of principal components to return
 #' @param M value to approximate the saturated model
 #' @param quiet logical; whether the calculation should give feedback
@@ -34,7 +34,7 @@ inv.logit.mat <- function(x, min = 0, max = 1) {
 #' @param random_start logical; whether to randomly inititalize the parameters. If \code{FALSE},
 #'   function will use an eigen-decomposition as starting value
 #' @param start_U starting value for the orthoganal matrix. If missing, initializes 
-#'   with first \code{k} right singular vectors of \code{dat}
+#'   with first \code{k} right singular vectors of \code{x}
 #' @param start_mu starting value for mu, if \code{main_effects = TRUE}
 #' @param main_effects logical; whether to include main effects in the model
 #' 
@@ -65,15 +65,15 @@ inv.logit.mat <- function(x, min = 0, max = 1) {
 #' plot(svd(mat_logit)$u[, 1], lpca$PCs[, 1])
 #' plot(svd(mat_logit)$u[, 1], svd(mat)$u[, 1])
 #' @export
-logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
-                             max_iters = 1000, conv_criteria = 1e-5, random_start = FALSE,
-                             start_U, start_mu, main_effects = TRUE) {
+logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
+                        max_iters = 1000, conv_criteria = 1e-5, random_start = FALSE,
+                        start_U, start_mu, main_effects = TRUE) {
   # better name for k and dat.
   use_irlba = use_irlba && requireNamespace("irlba", quietly = TRUE)
-  q = as.matrix(2 * dat - 1)
+  q = as.matrix(2 * x - 1)
   q[is.na(q)] <- 0 # forces x to be equal to theta when data is missing
-  n = nrow(dat)
-  d = ncol(dat)
+  n = nrow(q)
+  d = ncol(q)
   eta = q * abs(M)
   
   if (main_effects) {
@@ -107,7 +107,7 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   loss_trace = numeric(max_iters + 1)
   theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% U %*% t(U)
   loglike <- .Call(compute_loglik, q, theta)
-  # loglike=sum(dat*theta)-sum(pmax(0,theta))
+  # loglike = sum(x * theta) - sum(pmax(0, theta))
   loss_trace[1] = (-loglike) / sum(q!=0)
   ptm <- proc.time()
   
@@ -140,7 +140,7 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
       
       theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% tcrossprod(U)
       this_loglike <- .Call(compute_loglik, q, theta)
-      # this_loglike=sum(dat*theta)-sum(pmax(0,theta))
+      # this_loglike = sum(x * theta) - sum(pmax(0, theta))
       
       if (!use_irlba | this_loglike>=loglike) {
         loglike = this_loglike
@@ -176,7 +176,6 @@ logisticPCA <- function(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     loglike = sum(log(inv.logit.mat(q * theta))[q!=0])
     warning("Algorithm stopped because deviance increased.\nThis should not happen!")
   }
-  gc()
   
   object <- list(mu = mu,
                  U = U,

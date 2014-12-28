@@ -9,7 +9,3 @@ To install in R,
 library(devtools)
 install_github("andland/logisticPCA")
 ```
-
-## To Do
-* Add previous formulation of logistic PCA
-* Weighted by number of observations

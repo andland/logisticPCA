@@ -4,7 +4,7 @@
 #' Dimension reduction for binary data by extending SVD to 
 #' minimize binomial deviance.
 #' 
-#' @param dat matrix with all binary entries
+#' @param x matrix with all binary entries
 #' @param k rank of the SVD
 #' @param quiet logical; whether the calculation should give feedback
 #' @param use_irlba logical; if \code{TRUE}, the function uses the irlba package 
@@ -55,12 +55,12 @@
 #' plot(svd(mat_logit)$u[, 1], lsvd$A[, 1])
 #' plot(svd(mat_logit)$u[, 1], svd(mat)$u[, 1])
 #' @export
-logisticSVD <- function(dat, k = 2, quiet = TRUE, max_iters = 1000, conv_crit=1e-5,
+logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_crit=1e-5,
                         randstart = FALSE, start_A, start_B, start_mu, 
                         use_irlba = TRUE, main_effects = TRUE) {
   # TODO: Add ALS option?
   use_irlba = use_irlba && requireNamespace("irlba", quietly = TRUE)
-  q = 2 * as.matrix(dat) - 1
+  q = 2 * as.matrix(x) - 1
   q[is.na(q)] <- 0 # forces x to be equal to theta when data is missing
   n = nrow(q)
   d = ncol(q)
@@ -100,7 +100,7 @@ logisticSVD <- function(dat, k = 2, quiet = TRUE, max_iters = 1000, conv_crit=1e
   if (!missing(start_mu))
     mu = start_mu
   
-  # row.names(A) = row.names(dat); row.names(B) = colnames(dat)
+  # row.names(A) = row.names(x); row.names(B) = colnames(x)
   loss_trace = numeric(max_iters + 1)
   theta = outer(rep(1, n), mu) + tcrossprod(A, B)
   loglike <- .Call(compute_loglik, q, theta)

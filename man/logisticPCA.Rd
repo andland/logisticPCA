@@ -3,12 +3,12 @@
 \alias{logisticPCA}
 \title{Logistic Principal Component Analysis}
 \usage{
-logisticPCA(dat, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
+logisticPCA(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   max_iters = 1000, conv_criteria = 1e-05, random_start = FALSE, start_U,
   start_mu, main_effects = TRUE)
 }
 \arguments{
-\item{dat}{matrix with all binary entries}
+\item{x}{matrix with all binary entries}
 
 \item{k}{number of principal components to return}
 
@@ -28,7 +28,7 @@ in successive iterations}
 function will use an eigen-decomposition as starting value}
 
 \item{start_U}{starting value for the orthoganal matrix. If missing, initializes
-with first \code{k} right singular vectors of \code{dat}}
+with first \code{k} right singular vectors of \code{x}}
 
 \item{start_mu}{starting value for mu, if \code{main_effects = TRUE}}
 
