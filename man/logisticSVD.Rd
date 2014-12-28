@@ -3,9 +3,9 @@
 \alias{logisticSVD}
 \title{Logistic Singular Value Decomposition}
 \usage{
-logisticSVD(x, k = 2, quiet = TRUE, max_iters = 1000, conv_crit = 1e-05,
-  randstart = FALSE, start_A, start_B, start_mu, use_irlba = TRUE,
-  main_effects = TRUE)
+logisticSVD(x, k = 2, quiet = TRUE, max_iters = 1000,
+  conv_criteria = 1e-05, random_start = FALSE, start_A, start_B, start_mu,
+  use_irlba = TRUE, main_effects = TRUE)
 }
 \arguments{
 \item{x}{matrix with all binary entries}
@@ -15,6 +15,12 @@ logisticSVD(x, k = 2, quiet = TRUE, max_iters = 1000, conv_crit = 1e-05,
 \item{quiet}{logical; whether the calculation should give feedback}
 
 \item{max_iters}{number of maximum iterations}
+
+\item{conv_criteria}{convergence criteria. The difference between average deviance
+in successive iterations}
+
+\item{random_start}{logical; whether to randomly inititalize the parameters. If \code{FALSE},
+function will use an SVD as starting value}
 
 \item{start_A}{starting value for the orthoganal matrix. If missing, initializes
 with first \code{k} left singular vectors of \code{dat}}
@@ -28,12 +34,6 @@ with first \code{k} right singular vectors of \code{dat}}
 to more quickly calculate the SVD}
 
 \item{main_effects}{logical; whether to include main effects in the model}
-
-\item{conv_criteria}{convergence criteria. The difference between average deviance
-in successive iterations}
-
-\item{random_start}{logical; whether to randomly inititalize the parameters. If \code{FALSE},
-function will use an SVD as starting value}
 }
 \value{
 An S3 object of class \code{lsvd} which is a list with the

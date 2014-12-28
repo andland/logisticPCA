@@ -55,8 +55,8 @@
 #' plot(svd(mat_logit)$u[, 1], lsvd$A[, 1])
 #' plot(svd(mat_logit)$u[, 1], svd(mat)$u[, 1])
 #' @export
-logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_crit=1e-5,
-                        randstart = FALSE, start_A, start_B, start_mu, 
+logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria = 1e-5,
+                        random_start = FALSE, start_A, start_B, start_mu, 
                         use_irlba = TRUE, main_effects = TRUE) {
   # TODO: Add ALS option?
   use_irlba = use_irlba && requireNamespace("irlba", quietly = TRUE)
@@ -67,7 +67,7 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_crit=1e-5
   
   # Initialize #
   ##################
-  if (!randstart) {
+  if (!random_start) {
     if (main_effects) {
       mu = colMeans(4 * q)
     } else {
@@ -143,7 +143,7 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_crit=1e-5
           round(time_remain / 3600, 1), "hours remain.\n")
     }
     if (m > 4) {
-      if ((loss_trace[m] - loss_trace[m+1]) < conv_crit)
+      if ((loss_trace[m] - loss_trace[m+1]) < conv_criteria)
         break
     }
   }
@@ -161,12 +161,57 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_crit=1e-5
                 B = B,
                 iters = m,
                 loss_trace = loss_trace[1:(m+1)])
+  class(object) <- "lsvd"
+  object
 }
 
-predict.lsvd <- function(object, newdat, quiet = TRUE, max_iters = 1000, conv_crit = 1e-5,
-                         randstart = FALSE, procrustes = FALSE, normalize = FALSE, start_A, ...) {
-  # TODO: initialization can be improved. Assume B orthonormal
-  q = 2* as.matrix(newdat) - 1
+#' @title Predict Logistic SVD left singular values on new data
+#' 
+#' @param object A logistic SVD object
+#' @param newdata Binary matrix to apply logistic SVD on. If missing, will return the
+#' left singular vectors that the data \code{object} was fit on
+#' @param quiet logical; whether the calculation should give feedback
+#' @param max_iters number of maximum iterations
+#' @param conv_criteria convergence criteria. The difference between average deviance
+#'   in successive iterations
+#' @param random_start logical; whether to randomly inititalize the parameters. If \code{FALSE},
+#'   function will use an SVD as starting value
+#' @param start_A starting value for the orthoganal matrix. If missing, initializes 
+#'   with first \code{k} left singular vectors of \code{dat}
+#' @param ... Additional arguments.
+#' 
+#' @details
+#' Minimizes binomial deviance for new data by finding the optimal left singular vector
+#' matrix (\code{A}), given \code{B} and \code{mu}. Assumes the columns of the right 
+#' singular vector matrix (\code{B}) are orthonormal.
+#' 
+#' @examples
+#' # construct a low rank matrices in the logit scale
+#' rows = 100
+#' cols = 10
+#' loadings = rnorm(cols)
+#' mat_logit = outer(rnorm(rows), loadings)
+#' mat_logit_new = outer(rnorm(rows), loadings)
+#' 
+#' # convert to a binary matrix
+#' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
+#' mat_new = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit_new)) * 1.0
+#' 
+#' # run logistic PCA on it
+#' lsvd = logisticSVD(mat, k = 1, main_effects = FALSE)
+#' 
+#' A = predict(lsvd, mat_new)
+#' @export
+predict.lsvd <- function(object, newdata, quiet = TRUE, max_iters = 1000, conv_criteria = 1e-5,
+                         random_start = FALSE, start_A, ...) {
+  # TODO: glm option?
+  
+  if (missing(newdata)) {
+    return(object$A)
+  }
+  
+  x = as.matrix(newdata)
+  q = 2* x - 1
   q[is.na(q)] <- 0 # forces x to be equal to theta when data is missing
   n = nrow(q)
   d = ncol(q)
@@ -174,12 +219,13 @@ predict.lsvd <- function(object, newdat, quiet = TRUE, max_iters = 1000, conv_cr
   
   mu = object$mu
   B = object$B
+  mu_mat = outer(rep(1,n),mu)
   if (!missing(start_A)) {
     A = start_A
   } else {
-    if (!randstart) {
-      udv = svd(scale(q, center = mu, scale = FALSE))
-      A = matrix(udv$u[, 1:k], n, k) %*% diag(udv$d[1:k], nrow = k, ncol = k)
+    if (!random_start) {
+      # assumes A is initially matrix of 0's and B is orthonormal
+      A = 4 * (x - inv.logit.mat(mu_mat)) %*% B
     } else {
       A = matrix(runif(n * k, -1, 1), n, k) 
     }
@@ -187,30 +233,23 @@ predict.lsvd <- function(object, newdat, quiet = TRUE, max_iters = 1000, conv_cr
   
   loss_trace = numeric(max_iters)
   
-  mu_mat = outer(rep(1,n),mu)
-  if (!procrustes) {
-    BBtB = B %*% solve(t(B) %*% B)
-  }
   for (m in 1:max_iters) {
     last_A = A
     
     theta = mu_mat + tcrossprod(A, B)
     Xstar = as.matrix(theta + 4*q*(1 - inv.logit.mat(q * theta))) - mu_mat
-    if (procrustes) {
-      M = svd(Xstar %*% B)
-      A = M$u %*% t(M$v)
-    } else {
-      A = Xstar %*% BBtB
-    }
     
-    loglike = sum(log(inv.logit.mat(q * (outer(rep(1, n), mu) + tcrossprod(A, B))))[q != 0])
-    loss_trace[m] = (-loglike) / sum(!is.na(newdat))
+    # assumes columns of B are orthonormal
+    A = Xstar %*% B
+    
+    loglike = sum(log(inv.logit.mat(q * (mu_mat + tcrossprod(A, B))))[q != 0])
+    loss_trace[m] = (-loglike) / sum(q != 0)
     
     if (!quiet) 
       cat(m," ",loss_trace[m], "\n")
     
     if (m > 4) {
-      if ((loss_trace[m - 1] - loss_trace[m]) < conv_crit)
+      if ((loss_trace[m - 1] - loss_trace[m]) < conv_criteria)
         break
     }
   }
@@ -218,15 +257,8 @@ predict.lsvd <- function(object, newdat, quiet = TRUE, max_iters = 1000, conv_cr
     A = last_A
     m = m - 1
     
-    loglike = sum(log(inv.logit.mat(q * (outer(rep(1, n), mu) + tcrossprod(A, B))))[q != 0])
-  }
-  if (normalize) {
-    A = sweep(A, 2, sqrt(colSums(B^2)), "*")
-    B = sweep(B, 2, sqrt(colSums(B^2)), "/")
+    warning("Algorithm stopped because deviance increased.\nThis should not happen!")
   }
   
-  object = list(A = A,
-                iters = m,
-                loss_trace = loss_trace[1:m])
-  return(object)
+  return(A)
 }
