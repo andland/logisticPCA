@@ -187,11 +187,14 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
 }
 
 
-#' @title Predict Logistic PCA scores on new data
+#' @title Predict Logistic PCA scores or reconstruction on new data
 #' 
 #' @param object logistic PCA object
-#' @param newdata matrix with all binary entries. If missing, will return PCs 
-#'  that the data \code{object} was fit on
+#' @param newdata matrix with all binary entries. If missing, will return use the 
+#'  data that \code{object} was fit on
+#' @param type the type of fitting required. \code{type = "PCs"} gives the PC scores, 
+#'  \code{type = "link"} gives matrix on the logit scale and \code{type = "response"} 
+#'  gives matrix on the probability scale
 #' @param ... Additional arguments
 #' @examples
 #' # construct a low rank matrices in the logit scale
@@ -211,14 +214,22 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
 #' 
 #' PCs = predict(lpca, mat_new)
 #' @export
-predict.lpca <- function(object, newdata, ...) {
+predict.lpca <- function(object, newdata, type = c("PCs", "link", "response"), ...) {
+  type = match.arg(type)
+  
   if (missing(newdata)) {
     PCs = object$PCs
   } else {
     eta = ((as.matrix(newdata) * 2) - 1) * object$M
     PCs = scale(eta, center = object$mu, scale = FALSE) %*% object$U
   }
-  PCs
+  
+  if (type == "PCs") {
+    PCs
+  } else {
+    object$PCs = PCs
+    fitted(object, type, ...)
+  }
 }
 
 #' @title Fitted values using logistic PCA

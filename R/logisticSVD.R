@@ -163,11 +163,11 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
   object
 }
 
-#' @title Predict Logistic SVD left singular values on new data
+#' @title Predict Logistic SVD left singular values or reconstruction on new data
 #' 
 #' @param object logistic SVD object
-#' @param newdata matrix with all binary entries. If missing, will return the
-#' left singular vectors that the data \code{object} was fit on
+#' @param newdata matrix with all binary entries. If missing, will return use the 
+#'  data that \code{object} was fit on
 #' @param quiet logical; whether the calculation should give feedback
 #' @param max_iters number of maximum iterations
 #' @param conv_criteria convergence criteria. The difference between average deviance
@@ -175,6 +175,9 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
 #' @param random_start logical; whether to randomly inititalize the parameters. If \code{FALSE},
 #'   algorithm implicitly starts \code{A} with 0 matrix
 #' @param start_A starting value for the left singular vectors
+#' @param type the type of fitting required. \code{type = "PCs"} gives the left singular vectors, 
+#'  \code{type = "link"} gives matrix on the logit scale and \code{type = "response"} 
+#'  gives matrix on the probability scale
 #' @param ... Additional arguments
 #' 
 #' @details
@@ -198,67 +201,73 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
 #' # run logistic PCA on it
 #' lsvd = logisticSVD(mat, k = 1, main_effects = FALSE)
 #' 
-#' A = predict(lsvd, mat_new)
+#' A_new = predict(lsvd, mat_new)
 #' @export
 predict.lsvd <- function(object, newdata, quiet = TRUE, max_iters = 1000, conv_criteria = 1e-5,
-                         random_start = FALSE, start_A, ...) {
+                         random_start = FALSE, start_A, type = c("PCs", "link", "response"), ...) {
   # TODO: glm option?
+  type = match.arg(type)
   
   if (missing(newdata)) {
-    return(object$A)
-  }
-  
-  x = as.matrix(newdata)
-  q = 2* x - 1
-  q[is.na(q)] <- 0 # forces x to be equal to theta when data is missing
-  n = nrow(q)
-  d = ncol(q)
-  k = ncol(object$B)
-  
-  mu = object$mu
-  B = object$B
-  mu_mat = outer(rep(1,n),mu)
-  if (!missing(start_A)) {
-    A = start_A
+    A = object$A
   } else {
-    if (!random_start) {
-      # assumes A is initially matrix of 0's and B is orthonormal
-      A = 4 * (x - inv.logit.mat(mu_mat)) %*% B
+    x = as.matrix(newdata)
+    q = 2* x - 1
+    q[is.na(q)] <- 0 # forces x to be equal to theta when data is missing
+    n = nrow(q)
+    d = ncol(q)
+    k = ncol(object$B)
+    
+    mu = object$mu
+    B = object$B
+    mu_mat = outer(rep(1,n),mu)
+    if (!missing(start_A)) {
+      A = start_A
     } else {
-      A = matrix(runif(n * k, -1, 1), n, k) 
+      if (!random_start) {
+        # assumes A is initially matrix of 0's and B is orthonormal
+        A = 4 * (x - inv.logit.mat(mu_mat)) %*% B
+      } else {
+        A = matrix(runif(n * k, -1, 1), n, k) 
+      }
+    }
+    
+    loss_trace = numeric(max_iters)
+    
+    for (m in 1:max_iters) {
+      last_A = A
+      
+      theta = mu_mat + tcrossprod(A, B)
+      Xstar = as.matrix(theta + 4*q*(1 - inv.logit.mat(q * theta))) - mu_mat
+      
+      # assumes columns of B are orthonormal
+      A = Xstar %*% B
+      
+      loglike = sum(log(inv.logit.mat(q * (mu_mat + tcrossprod(A, B))))[q != 0])
+      loss_trace[m] = (-loglike) / sum(q != 0)
+      
+      if (!quiet) 
+        cat(m," ",loss_trace[m], "\n")
+      
+      if (m > 4) {
+        if ((loss_trace[m - 1] - loss_trace[m]) < conv_criteria)
+          break
+      }
+    }
+    if (loss_trace[m - 1] < loss_trace[m]) {
+      A = last_A
+      m = m - 1
+      
+      warning("Algorithm stopped because deviance increased.\nThis should not happen!")
     }
   }
   
-  loss_trace = numeric(max_iters)
-  
-  for (m in 1:max_iters) {
-    last_A = A
-    
-    theta = mu_mat + tcrossprod(A, B)
-    Xstar = as.matrix(theta + 4*q*(1 - inv.logit.mat(q * theta))) - mu_mat
-    
-    # assumes columns of B are orthonormal
-    A = Xstar %*% B
-    
-    loglike = sum(log(inv.logit.mat(q * (mu_mat + tcrossprod(A, B))))[q != 0])
-    loss_trace[m] = (-loglike) / sum(q != 0)
-    
-    if (!quiet) 
-      cat(m," ",loss_trace[m], "\n")
-    
-    if (m > 4) {
-      if ((loss_trace[m - 1] - loss_trace[m]) < conv_criteria)
-        break
-    }
+  if (type == "PCs") {
+    A
+  } else {
+    object$A = A
+    fitted(object, type, ...)
   }
-  if (loss_trace[m - 1] < loss_trace[m]) {
-    A = last_A
-    m = m - 1
-    
-    warning("Algorithm stopped because deviance increased.\nThis should not happen!")
-  }
-  
-  return(A)
 }
 
 #' @title Fitted values using logistic SVD
