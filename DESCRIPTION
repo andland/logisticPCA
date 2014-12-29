@@ -12,4 +12,5 @@ Description: Dimension reduction techniques for binary data including logistic
 License: MIT + file LICENSE
 URL: https://github.com/andland/logisticPCA
 Suggests:
-    irlba
+    irlba,
+    testthat
