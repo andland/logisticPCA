@@ -260,3 +260,41 @@ predict.lsvd <- function(object, newdata, quiet = TRUE, max_iters = 1000, conv_c
   
   return(A)
 }
+
+#' @title Fitted values using logistic SVD
+#' 
+#' @description 
+#' Fit a lower dimentional representation of the binary matrix using logistic SVD
+#' 
+#' @param object logistic SVD object
+#' @param type the type of fitting required. \code{type = "link"} gives output on the logit scale and
+#'  \code{type = "response"} gives output on the probability scale
+#' @param ... Additional arguments
+#' @examples
+#' # construct a low rank matrix in the logit scale
+#' rows = 100
+#' cols = 10
+#' set.seed(1)
+#' mat_logit = outer(rnorm(rows), rnorm(cols))
+#' 
+#' # generate a binary matrix
+#' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
+#' 
+#' # run logistic SVD on it
+#' lsvd = logisticSVD(mat, k = 1, main_effects = FALSE)
+#' 
+#' # construct fitted probability matrix
+#' fit = fitted(lsvd, type = "response")
+#' @export
+fitted.lsvd <- function(object, type = c("link", "response"), ...) {
+  type = match.arg(type)
+  n = nrow(object$A)
+  
+  theta = outer(rep(1, n), object$mu) + tcrossprod(object$A, object$B)
+  
+  if (type == "link") {
+    return(theta)
+  } else if (type == "response") {
+    return(inv.logit.mat(theta))
+  }
+}

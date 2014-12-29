@@ -220,3 +220,41 @@ predict.lpca <- function(object, newdata, ...) {
   }
   PCs
 }
+
+#' @title Fitted values using logistic PCA
+#' 
+#' @description 
+#' Fit a lower dimentional representation of the binary matrix using logistic PCA
+#' 
+#' @param object logistic PCA object
+#' @param type the type of fitting required. \code{type = "link"} gives output on the logit scale and
+#'  \code{type = "response"} gives output on the probability scale
+#' @param ... Additional arguments
+#' @examples
+#' # construct a low rank matrix in the logit scale
+#' rows = 100
+#' cols = 10
+#' set.seed(1)
+#' mat_logit = outer(rnorm(rows), rnorm(cols))
+#' 
+#' # generate a binary matrix
+#' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
+#' 
+#' # run logistic PCA on it
+#' lpca = logisticPCA(mat, k = 1, M = 4, main_effects = FALSE)
+#' 
+#' # construct fitted probability matrix
+#' fit = fitted(lpca, type = "response")
+#' @export
+fitted.lpca <- function(object, type = c("link", "response"), ...) {
+  type = match.arg(type)
+  n = nrow(object$PCs)
+  
+  theta = outer(rep(1, n), object$mu) + tcrossprod(object$PCs, object$U)
+  
+  if (type == "link") {
+    return(theta)
+  } else if (type == "response") {
+    return(inv.logit.mat(theta))
+  }
+}
