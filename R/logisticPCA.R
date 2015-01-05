@@ -70,7 +70,7 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   # better name for k and dat.
   use_irlba = use_irlba && requireNamespace("irlba", quietly = TRUE)
   q = as.matrix(2 * x - 1)
-  q[is.na(q)] <- 0 # forces x to be equal to theta when data is missing
+  q[is.na(q)] <- 0 # forces Z to be equal to theta when data is missing
   n = nrow(q)
   d = ncol(q)
   eta = q * abs(M)
@@ -119,15 +119,16 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     last_U = U
     last_mu = mu
     
-    X = as.matrix(theta + 4 * q * (1 - inv.logit.mat(q * theta)))
+    Z = as.matrix(theta + 4 * q * (1 - inv.logit.mat(q * theta)))
     if (main_effects) {
-      mu = as.numeric(colMeans(X - eta %*% U %*% t(U)))
+      mu = as.numeric(colMeans(Z - eta %*% U %*% t(U)))
     }
     
-    mat_temp = t(scale(eta, center = mu, scale = FALSE)) %*% X
+    mat_temp = t(scale(eta, center = mu, scale = FALSE)) %*% Z
     mat_temp = mat_temp + t(mat_temp) - etaTeta + n * outer(mu, mu)
     
-    
+    # irlba sometimes gives poor estimates of e-vectors
+    # so I switch to standard eigen if it does
     repeat {
       if (use_irlba) {
         udv = irlba::irlba(mat_temp, nu=k, nv=k, adjust=3)

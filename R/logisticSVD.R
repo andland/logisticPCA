@@ -59,7 +59,7 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
   # TODO: Add ALS option?
   use_irlba = use_irlba && requireNamespace("irlba", quietly = TRUE)
   q = 2 * as.matrix(x) - 1
-  q[is.na(q)] <- 0 # forces x to be equal to theta when data is missing
+  q[is.na(q)] <- 0 # forces Z to be equal to theta when data is missing
   n = nrow(q)
   d = ncol(q)
   
@@ -114,17 +114,18 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
     last_A = A
     last_B = B
     
-    X = as.matrix(theta + 4 * q * (1 - inv.logit.mat(q * theta)))
+    Z = as.matrix(theta + 4 * q * (1 - inv.logit.mat(q * theta)))
     if (main_effects) {
-      mu = as.numeric(colMeans(X))
+      mu = as.numeric(colMeans(Z))
     }
     
     if (use_irlba) {
-      udv = irlba::irlba(scale(X, center = main_effects, scale = FALSE), nu = max(k, 2), nv = max(k, 2))
+      udv = irlba::irlba(scale(Z, center = main_effects, scale = FALSE), nu = max(k, 2), nv = max(k, 2))
     } else {
-      udv = svd(scale(X, center = main_effects, scale = FALSE))
+      udv = svd(scale(Z, center = main_effects, scale = FALSE))
     }
-    # TODO: would sweep be faster here?
+    
+    # this is faster than A = sweep(udv$u, 2, udv$d, "*")
     A = matrix(udv$u[, 1:k], n, k) %*% diag(udv$d[1:k], nrow = k, ncol = k)
     B = matrix(udv$v[, 1:k], d, k)
     
@@ -213,7 +214,7 @@ predict.lsvd <- function(object, newdata, quiet = TRUE, max_iters = 1000, conv_c
   } else {
     x = as.matrix(newdata)
     q = 2* x - 1
-    q[is.na(q)] <- 0 # forces x to be equal to theta when data is missing
+    q[is.na(q)] <- 0 # forces Z to be equal to theta when data is missing
     n = nrow(q)
     d = ncol(q)
     k = ncol(object$B)
@@ -238,10 +239,10 @@ predict.lsvd <- function(object, newdata, quiet = TRUE, max_iters = 1000, conv_c
       last_A = A
       
       theta = mu_mat + tcrossprod(A, B)
-      Xstar = as.matrix(theta + 4*q*(1 - inv.logit.mat(q * theta))) - mu_mat
+      Z = as.matrix(theta + 4*q*(1 - inv.logit.mat(q * theta))) - mu_mat
       
       # assumes columns of B are orthonormal
-      A = Xstar %*% B
+      A = Z %*% B
       
       loglike = sum(log(inv.logit.mat(q * (mu_mat + tcrossprod(A, B))))[q != 0])
       loss_trace[m] = (-loglike) / sum(q != 0)
