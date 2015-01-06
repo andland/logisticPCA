@@ -44,7 +44,11 @@ inv.logit.mat <- function(x, min = 0, max = 1) {
 #' \item{PCs}{the princial components}
 #' \item{M}{the same parameter as inputed}
 #' \item{iters}{number of iterations required for convergence}
-#' \item{loss_trace}{the loss trace of the algorithm. Should be non-increasing}
+#' \item{loss_trace}{the trace of the average negative log likelihood of the algorithm. 
+#'    Should be non-increasing}
+#' \item{prop_deviance_expl}{the proportion of deviance explained by this model.
+#'    If \code{main_effects = TRUE}, the null model is just the main effects, otherwise 
+#'    the null model estimates 0 for all natural parameters.}
 #' 
 #' @examples
 #' # construct a low rank matrix in the logit scale
@@ -177,12 +181,23 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     warning("Algorithm stopped because deviance increased.\nThis should not happen!")
   }
   
+  # calculate the null log likelihood for % deviance explained
+  if (main_effects) {
+    null_proportions = colMeans(x)
+  } else {
+    null_proportions = rep(0.5, d)
+  }
+  null_loglikes <- null_proportions * log(null_proportions) + 
+    (1 - null_proportions) * log(1 - null_proportions)
+  null_loglike = sum(null_loglikes[!(null_proportions %in% c(0, 1))]) * n
+  
   object <- list(mu = mu,
                  U = U,
                  PCs = scale(eta, center = mu, scale = FALSE) %*% U,
                  M = M,
                  iters = m,
-                 loss_trace = loss_trace[1:(m + 1)])
+                 loss_trace = loss_trace[1:(m + 1)],
+                 prop_deviance_expl = 1 - loglike / null_loglike)
   class(object) <- "lpca"
   object
 }
@@ -191,7 +206,7 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
 #' @title Predict Logistic PCA scores or reconstruction on new data
 #' 
 #' @param object logistic PCA object
-#' @param newdata matrix with all binary entries. If missing, will return use the 
+#' @param newdata matrix with all binary entries. If missing, will use the 
 #'  data that \code{object} was fit on
 #' @param type the type of fitting required. \code{type = "PCs"} gives the PC scores, 
 #'  \code{type = "link"} gives matrix on the logit scale and \code{type = "response"} 

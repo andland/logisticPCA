@@ -10,7 +10,7 @@
 \arguments{
 \item{object}{logistic SVD object}
 
-\item{newdata}{matrix with all binary entries. If missing, will return use the
+\item{newdata}{matrix with all binary entries. If missing, will use the
 data that \code{object} was fit on}
 
 \item{quiet}{logical; whether the calculation should give feedback}

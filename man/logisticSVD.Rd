@@ -36,11 +36,15 @@ to more quickly calculate the SVD}
 \value{
 An S3 object of class \code{lsvd} which is a list with the
 following components:
+\item{mu}{the main effects}
 \item{A}{a \code{k}-dimentional orthogonal matrix with the scaled left singular vectors}
 \item{B}{a \code{k}-dimentional orthonormal matrix with the right singular vectors}
-\item{mu}{the main effects}
 \item{iters}{number of iterations required for convergence}
-\item{loss_trace}{the loss trace of the algorithm. Should be non-increasing}
+\item{loss_trace}{the trace of the average negative log likelihood of the algorithm.
+   Should be non-increasing}
+\item{prop_deviance_expl}{the proportion of deviance explained by this model.
+   If \code{main_effects = TRUE}, the null model is just the main effects, otherwise
+   the null model estimates 0 for all natural parameters.}
 }
 \description{
 Dimension reduction for binary data by extending SVD to

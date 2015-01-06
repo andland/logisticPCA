@@ -21,11 +21,15 @@
 #' 
 #' @return An S3 object of class \code{lsvd} which is a list with the
 #' following components:
+#' \item{mu}{the main effects}
 #' \item{A}{a \code{k}-dimentional orthogonal matrix with the scaled left singular vectors}
 #' \item{B}{a \code{k}-dimentional orthonormal matrix with the right singular vectors}
-#' \item{mu}{the main effects}
 #' \item{iters}{number of iterations required for convergence}
-#' \item{loss_trace}{the loss trace of the algorithm. Should be non-increasing}
+#' \item{loss_trace}{the trace of the average negative log likelihood of the algorithm. 
+#'    Should be non-increasing}
+#' \item{prop_deviance_expl}{the proportion of deviance explained by this model.
+#'    If \code{main_effects = TRUE}, the null model is just the main effects, otherwise 
+#'    the null model estimates 0 for all natural parameters.}
 #' 
 #' @references 
 #' de Leeuw, Jan, 2006. Principal component analysis of binary data 
@@ -155,11 +159,22 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
     warning("Algorithm stopped because deviance increased.\nThis should not happen!")
   }
   
+  # calculate the null log likelihood for % deviance explained
+  if (main_effects) {
+    null_proportions = colMeans(x)
+  } else {
+    null_proportions = rep(0.5, d)
+  }
+  null_loglikes <- null_proportions * log(null_proportions) + 
+    (1 - null_proportions) * log(1 - null_proportions)
+  null_loglike = sum(null_loglikes[!(null_proportions %in% c(0, 1))]) * n
+  
   object = list(mu = mu,
                 A = A,
                 B = B,
                 iters = m,
-                loss_trace = loss_trace[1:(m+1)])
+                loss_trace = loss_trace[1:(m+1)],
+                prop_deviance_expl = 1 - loglike / null_loglike)
   class(object) <- "lsvd"
   object
 }
@@ -167,7 +182,7 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
 #' @title Predict Logistic SVD left singular values or reconstruction on new data
 #' 
 #' @param object logistic SVD object
-#' @param newdata matrix with all binary entries. If missing, will return use the 
+#' @param newdata matrix with all binary entries. If missing, will use the 
 #'  data that \code{object} was fit on
 #' @param quiet logical; whether the calculation should give feedback
 #' @param max_iters number of maximum iterations
