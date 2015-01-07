@@ -11,6 +11,8 @@ Description: Dimension reduction techniques for binary data including logistic
     PCA
 License: MIT + file LICENSE
 URL: https://github.com/andland/logisticPCA
+Imports:
+    ggplot2
 Suggests:
     irlba,
     testthat

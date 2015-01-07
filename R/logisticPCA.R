@@ -285,3 +285,48 @@ fitted.lpca <- function(object, type = c("link", "response"), ...) {
     return(inv.logit.mat(theta))
   }
 }
+
+#' @title Plot logistic PCA
+#' 
+#' @description 
+#' Plots the results of a logistic PCA
+#' 
+#' @param object logistic PCA object
+#' @param type the type of plot \code{type = "trace"} plots the algorithms progress by
+#' iteration, \code{type = "loadings"} plots the loadings first 2 principal components
+#' @param ... Additional arguments
+#' @examples
+#' # construct a low rank matrix in the logit scale
+#' rows = 100
+#' cols = 10
+#' set.seed(1)
+#' mat_logit = outer(rnorm(rows), rnorm(cols))
+#' 
+#' # generate a binary matrix
+#' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
+#' 
+#' # run logistic PCA on it
+#' lpca = logisticPCA(mat, k = 2, M = 4, main_effects = FALSE)
+#' 
+#' # plot(lpca)
+#' @export
+plot.lpca <- function(object, type = c("trace", "loadings"), ...) {
+  type = match.arg(type)
+  
+  if (type == "trace") {
+    df = data.frame(Iteration = 0:object$iters,
+                    NegativeLogLikelihood = object$loss_trace)
+    p <- ggplot2::ggplot(df, aes(Iteration, NegativeLogLikelihood)) + 
+      geom_line()
+  } else if (type == "loadings") {
+    df = data.frame(object$U)
+    colnames(df) <- paste0("PC", 1:ncol(df))
+    if (ncol(df) == 1) {
+      p <- ggplot2::qplot(PC1, 0, data = df, ylab = NULL)
+    } else {
+      p <- ggplot2::ggplot(df, aes(PC1, PC2)) + geom_point()
+    }
+  }
+  
+  return(p)
+}
