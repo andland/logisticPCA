@@ -29,7 +29,8 @@ algorithm will use an SVD as starting value}
 \item{start_mu}{starting value for mu. Only used if \code{main_effects = TRUE}}
 
 \item{use_irlba}{logical; if \code{TRUE}, the function uses the irlba package
-to more quickly calculate the SVD}
+to more quickly calculate the SVD. When the number of columns is small,
+the approximation may be less accurate}
 
 \item{main_effects}{logical; whether to include main effects in the model}
 }

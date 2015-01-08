@@ -376,3 +376,41 @@ plot.lsvd <- function(object, type = c("trace", "loadings"), ...) {
   
   return(p)
 }
+
+#' @export
+cv.lsvd <- function(x, ks, folds = 5, quiet = TRUE, ...) {
+  q = 2 * as.matrix(x) - 1
+  
+  if (length(folds) > 1) {
+    # does this work if factor?
+    cv = folds
+    if (length(unique(cv)) <= 1) {
+      stop("If inputing CV split, must be more than one level")
+    }
+  } else {
+    cv = sample(1:folds, n, replace = TRUE)
+  }
+  
+  log_likes = matrix(0, length(ks),
+                     dimnames = list(k = ks))
+  for (k in ks) {
+    if (!quiet) {
+      cat("k =", k, "\n")
+    }
+    for (c in unique(cv)) {
+      lsvd = logisticSVD(x[c != cv, ], k = k, ...)
+      pred_theta = predict(lsvd, newdat = x[c == cv, ], type = "link")
+      #         log_likes[k == ks] = log_likes[k == ks] + 
+      #           .Call(compute_loglik, q[c == cv, ], pred_theta)
+      log_likes[k == ks] = log_likes[k == ks] + 
+        sum(log(inv.logit.mat(q[c == cv, ] * pred_theta)))
+    }
+  }
+  class(log_likes) <- c("matrix", "cv.lsvd")
+  which_max = which.max(log_likes)
+  if (!quiet) {
+    cat("Best: k =", ks[which_max], "\n")
+  }
+  
+  return(log_likes)
+}

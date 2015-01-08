@@ -1,21 +1,3 @@
-#' @title Inverse logit for matrices
-#' 
-#' @description
-#' Apply the inverse logit function to a matrix, element-wise. It 
-#' generalizes the \code{inv.logit} function from the \code{gtools} 
-#' library to matrices
-#'
-#' @param x matrix
-#' @param min Lower end of logit interval
-#' @param max Upper end of logit interval
-#' @examples
-#' (mat = matrix(rnorm(10 * 5), nrow = 10, ncol = 5))
-#' inv.logit.mat(mat)
-#' @export
-inv.logit.mat <- function(x, min = 0, max = 1) {
-  .Call(inv_logit_mat, x, min, max)
-}
-
 #' @title Logistic Principal Component Analysis
 #' 
 #' @description 
@@ -77,7 +59,7 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   q[is.na(q)] <- 0 # forces Z to be equal to theta when data is missing
   n = nrow(q)
   d = ncol(q)
-  if (is.null(M)) {
+  if (is.null(M) | M == 0) {
     M = 4
     solve_M = TRUE
   } else {
@@ -136,6 +118,8 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
       M_slope = sum(((x - Phat) * (q %*% U %*% t(U)))[q != 0]) 
       M_curve = -sum((Phat * (1 - Phat) * (q %*% U %*% t(U))^2)[q != 0])
       M = M - M_slope / M_curve
+      
+      theta = outer(rep(1, n), mu) + scale(M * q, center = mu, scale = FALSE) %*% tcrossprod(U)
     }
     
     Z = as.matrix(theta + 4 * q * (1 - inv.logit.mat(q * theta)))
@@ -353,13 +337,20 @@ plot.lpca <- function(object, type = c("trace", "loadings"), ...) {
   return(p)
 }
 
-
+#' @export
 cv.lpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...) {
   q = 2 * as.matrix(x) - 1
   
-  cv = sample(1:folds, n, replace = TRUE)
+  if (length(folds) > 1) {
+    # does this work if factor?
+    cv = folds
+    if (length(unique(cv)) <= 1) {
+      stop("If inputing CV split, must be more than one level")
+    }
+  } else {
+    cv = sample(1:folds, n, replace = TRUE)
+  }
   
-  Ms = 1:10
   log_likes = matrix(0, length(ks), length(Ms),
                      dimnames = list(k = ks, M = Ms))
   for (k in ks) {
@@ -367,15 +358,37 @@ cv.lpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...
       if (!quiet) {
         cat("k =", k, "M =", M, "\n")
       }
-      for (c in 1:folds) {
-        lpca = logisticPCA(dat[c != cv, ], k = k, M = M, ...)
+      for (c in unique(cv)) {
+        lpca = logisticPCA(x[c != cv, ], k = k, M = M, ...)
         pred_theta = predict(lpca, newdat = x[c == cv, ], type = "link")
+        #         log_likes[k == ks, M == Ms] = log_likes[k == ks, M == Ms] + 
+        #           .Call(compute_loglik, q[c == cv, ], pred_theta)
         log_likes[k == ks, M == Ms] = log_likes[k == ks, M == Ms] + 
-          .Call(compute_loglik, q[c == cv, ], pred_theta)
-        # log_likes[k == ks, M == Ms] = log_likes[k == ks, M == Ms] + 
-        #   sum(log(inv.logit.mat(q[c == cv, ] * pred_theta)))
+          sum(log(inv.logit.mat(q[c == cv, ] * pred_theta)))
       }
     }
   }
+  class(log_likes) <- c("matrix", "cv.lpca")
+  which_min = which(log_likes == max(log_likes), arr.ind = TRUE)
+  if (!quiet) {
+    cat("Best: k =", ks[which_min[1]], "M =", Ms[which_min[2]], "\n")
+  }
+  
   return(log_likes)
+}
+
+#' @export
+plot.cv.lpca <- function(object) {
+  library(ggplot2)
+  df = melt(-object, value.name = "NegLogLikelihood")
+  if (ncol(object) == 1) {
+    df$M = factor(df$M)
+    p <- ggplot(df, aes(k, NegLogLikelihood, colour = M)) + 
+      geom_line()
+  } else {
+    df$k = factor(df$k)
+    p <- ggplot(df, aes(M, NegLogLikelihood, colour = k)) + 
+      geom_line()
+  }
+  return(p)
 }

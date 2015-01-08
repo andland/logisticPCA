@@ -2,10 +2,13 @@
 
 S3method(fitted,lpca)
 S3method(fitted,lsvd)
+S3method(plot,cv.lpca)
 S3method(plot,lpca)
 S3method(plot,lsvd)
 S3method(predict,lpca)
 S3method(predict,lsvd)
+export(cv.lpca)
+export(cv.lsvd)
 export(inv.logit.mat)
 export(logisticPCA)
 export(logisticSVD)
