@@ -349,6 +349,7 @@ fitted.lsvd <- function(object, type = c("link", "response"), ...) {
 #' # plot(lsvd)
 #' @export
 plot.lsvd <- function(object, type = c("trace", "loadings"), ...) {
+  library("ggplot2")
   type = match.arg(type)
   
   if (type == "trace") {

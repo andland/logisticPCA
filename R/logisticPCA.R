@@ -24,7 +24,7 @@ inv.logit.mat <- function(x, min = 0, max = 1) {
 #' 
 #' @param x matrix with all binary entries
 #' @param k number of principal components to return
-#' @param M value to approximate the saturated model
+#' @param M value to approximate the saturated model. If \code{M = NULL}, M is solved for
 #' @param quiet logical; whether the calculation should give feedback
 #' @param use_irlba logical; if \code{TRUE}, the function uses the irlba package 
 #'   to more quickly calculate the eigen-decomposition
@@ -42,7 +42,7 @@ inv.logit.mat <- function(x, min = 0, max = 1) {
 #' \item{mu}{the main effects}
 #' \item{U}{a \code{k}-dimentional orthonormal matrix with the loadings}
 #' \item{PCs}{the princial components}
-#' \item{M}{the same parameter as inputed}
+#' \item{M}{the parameter inputed or solved for}
 #' \item{iters}{number of iterations required for convergence}
 #' \item{loss_trace}{the trace of the average negative log likelihood of the algorithm. 
 #'    Should be non-increasing}
@@ -77,13 +77,19 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   q[is.na(q)] <- 0 # forces Z to be equal to theta when data is missing
   n = nrow(q)
   d = ncol(q)
-  eta = q * abs(M)
+  if (is.null(M)) {
+    M = 4
+    solve_M = TRUE
+  } else {
+    solve_M = FALSE
+  }
+  # eta = q * abs(M)
   
   if (main_effects) {
     if (!missing(start_mu)) {
       mu = start_mu
     } else {
-      mu = colMeans(eta)
+      mu = colMeans(M * q)
     }
   } else {
     mu = rep(0, d)
@@ -105,12 +111,12 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     U = matrix(udv$v[, 1:k], d, k)
   }
   
-  etaTeta = crossprod(eta)
+  # etaTeta = crossprod(eta)
+  qTq = crossprod(q)
   
   loss_trace = numeric(max_iters + 1)
-  theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% U %*% t(U)
+  theta = outer(rep(1, n), mu) + scale(M * q, center = mu, scale = FALSE) %*% U %*% t(U)
   loglike <- .Call(compute_loglik, q, theta)
-  # loglike = sum(x * theta) - sum(pmax(0, theta))
   loss_trace[1] = (-loglike) / sum(q!=0)
   ptm <- proc.time()
   
@@ -121,15 +127,24 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   
   for (m in 1:max_iters) {
     last_U = U
+    last_M = M
     last_mu = mu
+    
+    if (solve_M) {
+      Phat = inv.logit.mat(theta)
+      # Need to check this is correct when missing data
+      M_slope = sum(((x - Phat) * (q %*% U %*% t(U)))[q != 0]) 
+      M_curve = -sum((Phat * (1 - Phat) * (q %*% U %*% t(U))^2)[q != 0])
+      M = M - M_slope / M_curve
+    }
     
     Z = as.matrix(theta + 4 * q * (1 - inv.logit.mat(q * theta)))
     if (main_effects) {
-      mu = as.numeric(colMeans(Z - eta %*% U %*% t(U)))
+      mu = as.numeric(colMeans(Z - (M * q) %*% U %*% t(U)))
     }
     
-    mat_temp = t(scale(eta, center = mu, scale = FALSE)) %*% Z
-    mat_temp = mat_temp + t(mat_temp) - etaTeta + n * outer(mu, mu)
+    mat_temp = t(scale(M * q, center = mu, scale = FALSE)) %*% Z
+    mat_temp = mat_temp + t(mat_temp) - M^2 * qTq + n * outer(mu, mu)
     
     # irlba sometimes gives poor estimates of e-vectors
     # so I switch to standard eigen if it does
@@ -142,9 +157,8 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
         U = matrix(eig$vectors[, 1:k], d, k)
       }
       
-      theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% tcrossprod(U)
+      theta = outer(rep(1, n), mu) + scale(M * q, center = mu, scale = FALSE) %*% tcrossprod(U)
       this_loglike <- .Call(compute_loglik, q, theta)
-      # this_loglike = sum(x * theta) - sum(pmax(0, theta))
       
       if (!use_irlba | this_loglike>=loglike) {
         loglike = this_loglike
@@ -174,10 +188,9 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   if ((loss_trace[m + 1] - loss_trace[m]) > (1e-10)) {
     U = last_U
     mu = last_mu
+    M = last_M
     m = m - 1
     
-    theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% U %*% t(U)
-    loglike = sum(log(inv.logit.mat(q * theta))[q!=0])
     warning("Algorithm stopped because deviance increased.\nThis should not happen!")
   }
   
@@ -193,7 +206,7 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   
   object <- list(mu = mu,
                  U = U,
-                 PCs = scale(eta, center = mu, scale = FALSE) %*% U,
+                 PCs = scale(M * q, center = mu, scale = FALSE) %*% U,
                  M = M,
                  iters = m,
                  loss_trace = loss_trace[1:(m + 1)],
@@ -311,6 +324,7 @@ fitted.lpca <- function(object, type = c("link", "response"), ...) {
 #' # plot(lpca)
 #' @export
 plot.lpca <- function(object, type = c("trace", "loadings"), ...) {
+  library("ggplot2")
   type = match.arg(type)
   
   if (type == "trace") {

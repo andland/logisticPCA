@@ -12,7 +12,7 @@ logisticPCA(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
 
 \item{k}{number of principal components to return}
 
-\item{M}{value to approximate the saturated model}
+\item{M}{value to approximate the saturated model. If \code{M = NULL}, M is solved for}
 
 \item{quiet}{logical; whether the calculation should give feedback}
 
@@ -39,7 +39,7 @@ following components:
 \item{mu}{the main effects}
 \item{U}{a \code{k}-dimentional orthonormal matrix with the loadings}
 \item{PCs}{the princial components}
-\item{M}{the same parameter as inputed}
+\item{M}{the parameter inputed or solved for}
 \item{iters}{number of iterations required for convergence}
 \item{loss_trace}{the trace of the average negative log likelihood of the algorithm.
    Should be non-increasing}
