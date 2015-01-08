@@ -8,7 +8,8 @@
 #' @param k rank of the SVD
 #' @param quiet logical; whether the calculation should give feedback
 #' @param use_irlba logical; if \code{TRUE}, the function uses the irlba package 
-#'   to more quickly calculate the SVD
+#'   to more quickly calculate the SVD. When the number of columns is small, 
+#'   the approximation may be less accurate
 #' @param max_iters number of maximum iterations
 #' @param conv_criteria convergence criteria. The difference between average deviance
 #'   in successive iterations
@@ -149,6 +150,10 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
       if ((loss_trace[m] - loss_trace[m+1]) < conv_criteria)
         break
     }
+    if (m == max_iters) {
+      warning("Algorithm ran ", max_iters, " iterations without converging.
+              You may want to run it longer.")
+    }
   }
   if (loss_trace[m] < loss_trace[m+1]) {
     mu = last_mu
@@ -156,8 +161,10 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
     B = last_B
     m = m - 1
     
-    warning("Algorithm stopped because deviance increased.\nThis should not happen!")
+    warning("Algorithm stopped because deviance increased.\nThis should not happen!
+            Try rerunning with use_irlba = FALSE")
   }
+  
   
   # calculate the null log likelihood for % deviance explained
   if (main_effects) {

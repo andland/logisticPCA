@@ -71,7 +71,7 @@ inv.logit.mat <- function(x, min = 0, max = 1) {
 logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
                         max_iters = 1000, conv_criteria = 1e-5, random_start = FALSE,
                         start_U, start_mu, main_effects = TRUE) {
-  # better name for k and dat.
+  # better name for k
   use_irlba = use_irlba && requireNamespace("irlba", quietly = TRUE)
   q = as.matrix(2 * x - 1)
   q[is.na(q)] <- 0 # forces Z to be equal to theta when data is missing
@@ -179,8 +179,16 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
       cat(round(time_elapsed / 3600, 1), "hours elapsed. Max", round(time_remain / 3600, 1), "hours remain.\n")
     }
     if (m > 4) {
-      if ((loss_trace[m] - loss_trace[m+1]) < conv_criteria)
-        break
+      # when solving for M, the monoticity does not apply
+      if (solve_M) {
+        if (abs(loss_trace[m] - loss_trace[m+1]) < conv_criteria) {
+          break
+        }
+      } else {
+        if ((loss_trace[m] - loss_trace[m+1]) < conv_criteria) {
+          break
+        }
+      }
     }
   }
   
@@ -343,4 +351,31 @@ plot.lpca <- function(object, type = c("trace", "loadings"), ...) {
   }
   
   return(p)
+}
+
+
+cv.lpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...) {
+  q = 2 * as.matrix(x) - 1
+  
+  cv = sample(1:folds, n, replace = TRUE)
+  
+  Ms = 1:10
+  log_likes = matrix(0, length(ks), length(Ms),
+                     dimnames = list(k = ks, M = Ms))
+  for (k in ks) {
+    for (M in Ms) {
+      if (!quiet) {
+        cat("k =", k, "M =", M, "\n")
+      }
+      for (c in 1:folds) {
+        lpca = logisticPCA(dat[c != cv, ], k = k, M = M, ...)
+        pred_theta = predict(lpca, newdat = x[c == cv, ], type = "link")
+        log_likes[k == ks, M == Ms] = log_likes[k == ks, M == Ms] + 
+          .Call(compute_loglik, q[c == cv, ], pred_theta)
+        # log_likes[k == ks, M == Ms] = log_likes[k == ks, M == Ms] + 
+        #   sum(log(inv.logit.mat(q[c == cv, ] * pred_theta)))
+      }
+    }
+  }
+  return(log_likes)
 }
