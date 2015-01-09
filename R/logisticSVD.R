@@ -106,7 +106,7 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
   # row.names(A) = row.names(x); row.names(B) = colnames(x)
   loss_trace = numeric(max_iters + 1)
   theta = outer(rep(1, n), mu) + tcrossprod(A, B)
-  loglike <- .Call(compute_loglik, q, theta)
+  loglike <- log_like_Bernoulli(q = q, theta = theta)
   loss_trace[1] = -loglike / sum(q!=0)
   ptm <- proc.time()
   if (!quiet) {
@@ -135,7 +135,7 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
     B = matrix(udv$v[, 1:k], d, k)
     
     theta = outer(rep(1, n), mu) + tcrossprod(A, B)
-    loglike <- .Call(compute_loglik, q, theta)
+    loglike <- log_like_Bernoulli(q = q, theta = theta)
     loss_trace[m+1] = -loglike / sum(q != 0)
     
     if (!quiet) {
@@ -377,22 +377,54 @@ plot.lsvd <- function(object, type = c("trace", "loadings"), ...) {
   return(p)
 }
 
+#' @title CV for logistic SVD
+#' 
+#' @description 
+#' Run cross validation on dimension for logistic SVD
+#' 
+#' @param x matrix with all binary entries
+#' @param ks the different dimensions \code{k} to try
+#' @param folds if \code{folds} is a scalar, then it is the number of folds. If 
+#'  it is a vector, it should be the same length as the number of rows in \code{x}
+#' @param quiet logical; whether the function should display progress
+#' @param ... Additional arguments
+#' 
+#' @return A matrix of the CV log likelihood with \code{k} in rows
+#' 
+#' @examples
+#' # construct a low rank matrix in the logit scale
+#' rows = 100
+#' cols = 10
+#' set.seed(1)
+#' mat_logit = outer(rnorm(rows), rnorm(cols))
+#' 
+#' # generate a binary matrix
+#' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
+#' 
+#' \dontrun{
+#' loglikes = cv.lsvd(mat, ks = 1:9)
+#' plot(loglikes)
+#' }
 #' @export
 cv.lsvd <- function(x, ks, folds = 5, quiet = TRUE, ...) {
   q = 2 * as.matrix(x) - 1
+  q[is.na(q)] <- 0
   
   if (length(folds) > 1) {
     # does this work if factor?
-    cv = folds
-    if (length(unique(cv)) <= 1) {
+    if (length(unique(folds)) <= 1) {
       stop("If inputing CV split, must be more than one level")
     }
+    if (length(folds) != nrow(x)) {
+      stop("if folds is a vector, it should be of same length as nrow(x)")
+    }
+    cv = folds
   } else {
-    cv = sample(1:folds, n, replace = TRUE)
+    cv = sample(1:folds, nrow(q), replace = TRUE)
   }
   
-  log_likes = matrix(0, length(ks),
-                     dimnames = list(k = ks))
+  log_likes = matrix(0, length(ks), 1,
+                     dimnames = list(k = ks, M = "LSVD"))
   for (k in ks) {
     if (!quiet) {
       cat("k =", k, "\n")
@@ -400,13 +432,13 @@ cv.lsvd <- function(x, ks, folds = 5, quiet = TRUE, ...) {
     for (c in unique(cv)) {
       lsvd = logisticSVD(x[c != cv, ], k = k, ...)
       pred_theta = predict(lsvd, newdat = x[c == cv, ], type = "link")
-      #         log_likes[k == ks] = log_likes[k == ks] + 
-      #           .Call(compute_loglik, q[c == cv, ], pred_theta)
       log_likes[k == ks] = log_likes[k == ks] + 
-        sum(log(inv.logit.mat(q[c == cv, ] * pred_theta)))
+        log_like_Bernoulli(q = q[c == cv, ], theta = pred_theta)
+      #       log_likes[k == ks] = log_likes[k == ks] + 
+      #         sum(log(inv.logit.mat(q[c == cv, ] * pred_theta)))
     }
   }
-  class(log_likes) <- c("matrix", "cv.lsvd")
+  class(log_likes) <- c("matrix", "cv.lpca")
   which_max = which.max(log_likes)
   if (!quiet) {
     cat("Best: k =", ks[which_max], "\n")

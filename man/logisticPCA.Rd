@@ -12,7 +12,7 @@ logisticPCA(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
 
 \item{k}{number of principal components to return}
 
-\item{M}{value to approximate the saturated model. If \code{M = NULL}, M is solved for}
+\item{M}{value to approximate the saturated model. If \code{M = 0}, M is solved for}
 
 \item{quiet}{logical; whether the calculation should give feedback}
 

@@ -26,12 +26,9 @@ inv.logit.mat <- function(x, min = 0, max = 1) {
 #'  same dimensions as x
 #' @param q instead of x, you can input matrix q which is 
 #'  -1 if \code{x = 0}, 1 if \code{x = 1}, and 0 if \code{is.na(x)}
-#' @examples
-#' (mat = matrix(rnorm(10 * 5), nrow = 10, ncol = 5))
-#' inv.logit.mat(mat)
 #' @export
 log_like_Bernoulli <- function(x, theta, q) {
-  if (missing(x) & !missing(q)) {
+  if (!missing(x)) {
     q = 2 * as.matrix(x) - 1
     q[is.na(q)] <- 0
   }

@@ -6,7 +6,7 @@
 #' 
 #' @param x matrix with all binary entries
 #' @param k number of principal components to return
-#' @param M value to approximate the saturated model. If \code{M = NULL}, M is solved for
+#' @param M value to approximate the saturated model. If \code{M = 0}, M is solved for
 #' @param quiet logical; whether the calculation should give feedback
 #' @param use_irlba logical; if \code{TRUE}, the function uses the irlba package 
 #'   to more quickly calculate the eigen-decomposition
@@ -59,7 +59,7 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   q[is.na(q)] <- 0 # forces Z to be equal to theta when data is missing
   n = nrow(q)
   d = ncol(q)
-  if (is.null(M) | M == 0) {
+  if (M == 0) {
     M = 4
     solve_M = TRUE
   } else {
@@ -98,7 +98,7 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   
   loss_trace = numeric(max_iters + 1)
   theta = outer(rep(1, n), mu) + scale(M * q, center = mu, scale = FALSE) %*% U %*% t(U)
-  loglike <- .Call(compute_loglik, q, theta)
+  loglike <- log_like_Bernoulli(q = q, theta = theta)
   loss_trace[1] = (-loglike) / sum(q!=0)
   ptm <- proc.time()
   
@@ -142,7 +142,7 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
       }
       
       theta = outer(rep(1, n), mu) + scale(M * q, center = mu, scale = FALSE) %*% tcrossprod(U)
-      this_loglike <- .Call(compute_loglik, q, theta)
+      this_loglike <- log_like_Bernoulli(q = q, theta = theta)
       
       if (!use_irlba | this_loglike>=loglike) {
         loglike = this_loglike
@@ -313,7 +313,7 @@ fitted.lpca <- function(object, type = c("link", "response"), ...) {
 #' # run logistic PCA on it
 #' lpca = logisticPCA(mat, k = 2, M = 4, main_effects = FALSE)
 #' 
-#' # plot(lpca)
+#' \dontrun{plot(lpca)}
 #' @export
 plot.lpca <- function(object, type = c("trace", "loadings"), ...) {
   library("ggplot2")
@@ -337,18 +337,52 @@ plot.lpca <- function(object, type = c("trace", "loadings"), ...) {
   return(p)
 }
 
+#' @title CV for logistic PCA
+#' 
+#' @description 
+#' Run cross validation on dimension and \code{M} for logistic PCA
+#' 
+#' @param x matrix with all binary entries
+#' @param ks the different dimensions \code{k} to try
+#' @param Ms the different approximations to the saturated model \code{M} to try
+#' @param folds if \code{folds} is a scalar, then it is the number of folds. If 
+#'  it is a vector, it should be the same length as the number of rows in \code{x}
+#' @param quiet logical; whether the function should display progress
+#' @param ... Additional arguments
+#' 
+#' @return A matrix of the CV log likelihood with \code{k} in rows and 
+#'  \code{M} in columns
+#' 
+#' @examples
+#' # construct a low rank matrix in the logit scale
+#' rows = 100
+#' cols = 10
+#' set.seed(1)
+#' mat_logit = outer(rnorm(rows), rnorm(cols))
+#' 
+#' # generate a binary matrix
+#' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
+#' 
+#' \dontrun{
+#' loglikes = cv.lpca(mat, ks = 1:9, Ms = 3:6)
+#' plot(loglikes)
+#' }
 #' @export
 cv.lpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...) {
   q = 2 * as.matrix(x) - 1
+  q[is.na(q)] <- 0
   
   if (length(folds) > 1) {
     # does this work if factor?
-    cv = folds
-    if (length(unique(cv)) <= 1) {
+    if (length(unique(folds)) <= 1) {
       stop("If inputing CV split, must be more than one level")
     }
+    if (length(folds) != nrow(x)) {
+      stop("if folds is a vector, it should be of same length as nrow(x)")
+    }
+    cv = folds
   } else {
-    cv = sample(1:folds, n, replace = TRUE)
+    cv = sample(1:folds, nrow(q), replace = TRUE)
   }
   
   log_likes = matrix(0, length(ks), length(Ms),
@@ -361,10 +395,10 @@ cv.lpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...
       for (c in unique(cv)) {
         lpca = logisticPCA(x[c != cv, ], k = k, M = M, ...)
         pred_theta = predict(lpca, newdat = x[c == cv, ], type = "link")
-        #         log_likes[k == ks, M == Ms] = log_likes[k == ks, M == Ms] + 
-        #           .Call(compute_loglik, q[c == cv, ], pred_theta)
         log_likes[k == ks, M == Ms] = log_likes[k == ks, M == Ms] + 
-          sum(log(inv.logit.mat(q[c == cv, ] * pred_theta)))
+          log_like_Bernoulli(q = q[c == cv, ], theta = pred_theta)
+        #         log_likes[k == ks, M == Ms] = log_likes[k == ks, M == Ms] + 
+        #           sum(log(inv.logit.mat(q[c == cv, ] * pred_theta)))
       }
     }
   }
@@ -377,9 +411,32 @@ cv.lpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...
   return(log_likes)
 }
 
+#' @title Plot CV for logistic PCA
+#' 
+#' @description 
+#' Plot cross validation results logistic PCA
+#' 
+#' @param object a \code{cv.lpca} object
+#' @param ... Additional arguments
+#' 
+#' @examples
+#' # construct a low rank matrix in the logit scale
+#' rows = 100
+#' cols = 10
+#' set.seed(1)
+#' mat_logit = outer(rnorm(rows), rnorm(cols))
+#' 
+#' # generate a binary matrix
+#' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
+#' 
+#' \dontrun{
+#' loglikes = cv.lpca(dat, ks = 1:9, Ms = 3:6)
+#' plot(loglikes)
+#' }
 #' @export
-plot.cv.lpca <- function(object) {
+plot.cv.lpca <- function(object, ...) {
   library(ggplot2)
+  library(reshape2)
   df = melt(-object, value.name = "NegLogLikelihood")
   if (ncol(object) == 1) {
     df$M = factor(df$M)
