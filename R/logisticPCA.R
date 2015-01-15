@@ -390,15 +390,21 @@ cv.lpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...
   for (k in ks) {
     for (M in Ms) {
       if (!quiet) {
-        cat("k =", k, "M =", M, "\n")
+        cat("k =", k, "M =", M, "")
       }
       for (c in unique(cv)) {
+        if (!quiet) {
+          cat(".")
+        }
         lpca = logisticPCA(x[c != cv, ], k = k, M = M, ...)
         pred_theta = predict(lpca, newdat = x[c == cv, ], type = "link")
         log_likes[k == ks, M == Ms] = log_likes[k == ks, M == Ms] + 
           log_like_Bernoulli(q = q[c == cv, ], theta = pred_theta)
         #         log_likes[k == ks, M == Ms] = log_likes[k == ks, M == Ms] + 
         #           sum(log(inv.logit.mat(q[c == cv, ] * pred_theta)))
+      }
+      if (!quiet) {
+        cat("\n")
       }
     }
   }

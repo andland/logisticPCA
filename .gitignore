@@ -1,6 +1,12 @@
 .Rproj.user
 .Rhistory
 .RData
+
+# files created by c
 src/*.o
 src/*.so
 src/*.dll
+
+# folders created when building the package
+src-i386
+src-x64
