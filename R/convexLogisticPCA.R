@@ -137,7 +137,7 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
       best_HU = HU
       best_loglike = loglike
     }
-    if (abs(loss_trace[m+1]-loss_trace[m]) < conv_criteria | min_loss==0) {
+    if (abs(loss_trace[m+1]-loss_trace[m]) < conv_criteria | min_loss == 0) {
       break
     }
   }
@@ -197,4 +197,99 @@ project.Fantope <- function(x, k) {
   vals = pmin(pmax(vals - theta, 0), 1)
   return(list(H = eig$vectors %*% diag(vals) %*% t(eig$vectors),
               U = matrix(eig$vectors[, 1:k], nrow(x), k)))
+}
+
+#' @title Predict Convex Logistic PCA scores or reconstruction on new data
+#' 
+#' @param object convex logistic PCA object
+#' @param newdata matrix with all binary entries. If missing, will use the 
+#'  data that \code{object} was fit on
+#' @param type the type of fitting required. \code{type = "PCs"} gives the PC scores, 
+#'  \code{type = "link"} gives matrix on the logit scale and \code{type = "response"} 
+#'  gives matrix on the probability scale
+#' @param ... Additional arguments
+#' @examples
+#' # construct a low rank matrices in the logit scale
+#' rows = 100
+#' cols = 10
+#' set.seed(1)
+#' loadings = rnorm(cols)
+#' mat_logit = outer(rnorm(rows), loadings)
+#' mat_logit_new = outer(rnorm(rows), loadings)
+#' 
+#' # convert to a binary matrix
+#' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
+#' mat_new = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit_new)) * 1.0
+#' 
+#' # run logistic PCA on it
+#' clpca = convexLogisticPCA(mat, k = 1, M = 4, main_effects = FALSE)
+#' 
+#' PCs = predict(clpca, mat_new)
+#' @export
+predict.clpca <- function(object, newdata, type = c("PCs", "link", "response"), ...) {
+  type = match.arg(type)
+  
+  if (type == "PCs") {
+    if (missing(newdata)) {
+      PCs = object$PCs
+    } else {
+      eta = ((as.matrix(newdata) * 2) - 1) * object$M
+      PCs = scale(eta, center = object$mu, scale = FALSE) %*% object$U
+    }
+    return(PCs)
+  } else {
+    eta = object$M * (2 * as.matrix(newdata) - 1)
+    theta = outer(rep(1, nrow(eta)), object$mu) + scale(eta, object$mu, FALSE) %*% object$H
+    if (type == "link") {
+      return(theta)
+    } else {
+      return(inv.logit.mat(theta))
+    }
+  }
+}
+
+#' @title Plot convex logistic PCA
+#' 
+#' @description 
+#' Plots the results of a convex logistic PCA
+#' 
+#' @param object convex logistic PCA object
+#' @param type the type of plot \code{type = "trace"} plots the algorithms progress by
+#' iteration, \code{type = "loadings"} plots the loadings first 2 PC loadings
+#' @param ... Additional arguments
+#' @examples
+#' # construct a low rank matrix in the logit scale
+#' rows = 100
+#' cols = 10
+#' set.seed(1)
+#' mat_logit = outer(rnorm(rows), rnorm(cols))
+#' 
+#' # generate a binary matrix
+#' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
+#' 
+#' # run logistic PCA on it
+#' clpca = convexLogisticPCA(mat, k = 2, M = 4, main_effects = FALSE)
+#' 
+#' \dontrun{plot(clpca)}
+#' @export
+plot.clpca <- function(object, type = c("trace", "loadings"), ...) {
+  library("ggplot2")
+  type = match.arg(type)
+  
+  if (type == "trace") {
+    df = data.frame(Iteration = 0:object$iters,
+                    NegativeLogLikelihood = object$loss_trace)
+    p <- ggplot2::ggplot(df, aes(Iteration, NegativeLogLikelihood)) + 
+      geom_line()
+  } else if (type == "loadings") {
+    df = data.frame(object$U)
+    colnames(df) <- paste0("PC", 1:ncol(df))
+    if (ncol(df) == 1) {
+      p <- ggplot2::qplot(PC1, 0, data = df, ylab = NULL)
+    } else {
+      p <- ggplot2::ggplot(df, aes(PC1, PC2)) + geom_point()
+    }
+  }
+  
+  return(p)
 }

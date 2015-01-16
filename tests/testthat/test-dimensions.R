@@ -10,8 +10,8 @@ mat_logit = outer(rnorm(rows), rnorm(cols))
 mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 
 lpca = logisticPCA(mat, k = k, M = 4, main_effects = FALSE)
-lsvd = logisticSVD(mat, k = k, main_effects = FALSE, max_iters = 50)
-clpca = convexLogisticPCA(mat, M = 4, k = k, main_effects = FALSE, ss = 1)
+lsvd = logisticSVD(mat, k = k, main_effects = FALSE, conv_criteria = 1e-4, use_irlba = FALSE)
+clpca = convexLogisticPCA(mat, M = 4, k = k, main_effects = FALSE)
 
 pred1 = predict(lpca, mat)
 pred1l = predict(lpca, mat, type = "link")
@@ -24,6 +24,10 @@ pred2l = predict(lsvd, mat, type = "link")
 pred2r = predict(lsvd, mat, type = "response")
 fit2l = fitted(lsvd, type = "link")
 fit2r = fitted(lsvd, type = "response")
+
+pred3 = predict(clpca, mat)
+pred3l = predict(clpca, mat, type = "link")
+pred3r = predict(clpca, mat, type = "response")
 
 test_that("correct classes", {
   expect_is(lpca, "lpca")
@@ -41,6 +45,10 @@ test_that("correct classes", {
   expect_is(pred2r, "matrix")
   expect_is(fit2l, "matrix")
   expect_is(fit2r, "matrix")
+  
+  expect_is(pred3, "matrix")
+  expect_is(pred3l, "matrix")
+  expect_is(pred3r, "matrix")
 })
 
 test_that("k = 1 LPCA", {
@@ -67,12 +75,25 @@ test_that("k = 1 LSVD", {
   expect_equal(dim(fit2r), c(rows, cols))
 })
 
+test_that("k = 1 CLPCA", {
+  expect_equal(dim(clpca$U), c(cols, 1))
+  expect_equal(dim(clpca$H), c(cols, cols))
+  expect_equal(dim(clpca$PCs), c(rows, 1))
+  expect_equal(length(clpca$mu), cols)
+  
+  expect_equal(dim(pred3), c(rows, 1))
+  expect_equal(dim(pred3l), c(rows, cols))
+  expect_equal(dim(pred3r), c(rows, cols))
+})
 
-rm(lsvd, lpca, pred1, pred1l, pred1r, pred2, pred2l, pred2r, fit1l, fit1r, fit2l, fit2r)
+
+rm(lsvd, lpca, clpca, pred1, pred1l, pred1r, pred2, pred2l, pred2r, 
+   pred3, pred3l, pred3r, fit1l, fit1r, fit2l, fit2r)
 
 k = 2
 lpca = logisticPCA(mat, M = 4, k = k, main_effects = FALSE)
-lsvd = logisticSVD(mat, k = k, main_effects = FALSE, max_iters = 50)
+lsvd = logisticSVD(mat, k = k, main_effects = FALSE, conv_criteria = 1e-4, use_irlba = FALSE)
+clpca = convexLogisticPCA(mat, M = 4, k = k, main_effects = FALSE)
 
 pred1 = predict(lpca, mat)
 pred1l = predict(lpca, mat, type = "link")
@@ -85,6 +106,10 @@ pred2l = predict(lsvd, mat, type = "link")
 pred2r = predict(lsvd, mat, type = "response")
 fit2l = fitted(lsvd, type = "link")
 fit2r = fitted(lsvd, type = "response")
+
+pred3 = predict(clpca, mat)
+pred3l = predict(clpca, mat, type = "link")
+pred3r = predict(clpca, mat, type = "response")
 
 test_that("k = 2 LPCA", {
   expect_equal(dim(lpca$U), c(cols, 2))
@@ -108,6 +133,17 @@ test_that("k = 2 LSVD", {
   expect_equal(dim(pred2r), c(rows, cols))
   expect_equal(dim(fit2l), c(rows, cols))
   expect_equal(dim(fit2r), c(rows, cols))
+})
+
+test_that("k = 2 LPCA", {
+  expect_equal(dim(clpca$U), c(cols, 2))
+  expect_equal(dim(clpca$H), c(cols, cols))
+  expect_equal(dim(clpca$PCs), c(rows, 2))
+  expect_equal(length(clpca$mu), cols)
+  
+  expect_equal(dim(pred3), c(rows, 2))
+  expect_equal(dim(pred3l), c(rows, cols))
+  expect_equal(dim(pred3r), c(rows, cols))
 })
 
 is_less_than_equal <- function (expected, label = NULL, ...) 
@@ -153,4 +189,7 @@ test_that("response between 0 and 1", {
   
   expect_that(max(pred2r), is_less_than_equal(1))
   expect_that(max(fit2r), is_less_than_equal(1))
+  
+  expect_that(min(pred3r), is_more_than_equal(0))
+  expect_that(max(pred3r), is_less_than_equal(1))
 })
