@@ -187,6 +187,7 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   }
   
   # calculate the null log likelihood for % deviance explained
+  # assumes no missing data
   if (main_effects) {
     null_proportions = colMeans(x)
   } else {

@@ -9,8 +9,9 @@ mat_logit = outer(rnorm(rows), rnorm(cols))
 
 mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 
-lpca = logisticPCA(mat, M = 4, k = k, main_effects = FALSE)
+lpca = logisticPCA(mat, k = k, M = 4, main_effects = FALSE)
 lsvd = logisticSVD(mat, k = k, main_effects = FALSE, max_iters = 50)
+clpca = convexLogisticPCA(mat, M = 4, k = k, main_effects = FALSE, ss = 1)
 
 pred1 = predict(lpca, mat)
 pred1l = predict(lpca, mat, type = "link")
@@ -27,6 +28,7 @@ fit2r = fitted(lsvd, type = "response")
 test_that("correct classes", {
   expect_is(lpca, "lpca")
   expect_is(lsvd, "lsvd")
+  expect_is(clpca, "clpca")
   
   expect_is(pred1, "matrix")
   expect_is(pred1l, "matrix")
