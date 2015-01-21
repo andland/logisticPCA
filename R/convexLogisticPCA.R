@@ -77,7 +77,7 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   } else if (random_start) {
     U = matrix(rnorm(d * d), d, d)
     U = qr.Q(qr(U))
-    HU = project.L1andFantope(U %*% t(U), k, t)
+    HU = project.Fantope(U %*% t(U), k)
     H = HU$H
   } else {
     if (use_irlba) {
@@ -267,10 +267,12 @@ predict.clpca <- function(object, newdata, type = c("PCs", "link", "response"), 
 #' # generate a binary matrix
 #' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 #' 
-#' # run logistic PCA on it
+#' # run convex logistic PCA on it
 #' clpca = convexLogisticPCA(mat, k = 2, M = 4, main_effects = FALSE)
 #' 
-#' \dontrun{plot(clpca)}
+#' \dontrun{
+#' plot(clpca)
+#' }
 #' @export
 plot.clpca <- function(object, type = c("trace", "loadings"), ...) {
   library("ggplot2")
@@ -292,4 +294,21 @@ plot.clpca <- function(object, type = c("trace", "loadings"), ...) {
   }
   
   return(p)
+}
+
+#' @title Print convex logistic PCA object
+#' 
+#' @param x convex logistic PCA object
+#' @param ... Additional arguments
+#' 
+#' @export
+print.clpca <- function(x, ...) {
+  cat(nrow(x$PCs), "rows and ")
+  cat(nrow(x$H), "columns\n")
+  cat("Rank", ncol(x$U), "Fantope solution with M =", x$M, "\n")
+  cat("\n")
+  cat(round(x$prop_deviance_expl * 100, 1), "% of deviance explained\n", sep = "")
+  cat(x$iters, "iterations to converge\n")
+  
+  invisible(x)
 }

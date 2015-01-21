@@ -314,7 +314,9 @@ fitted.lpca <- function(object, type = c("link", "response"), ...) {
 #' # run logistic PCA on it
 #' lpca = logisticPCA(mat, k = 2, M = 4, main_effects = FALSE)
 #' 
-#' \dontrun{plot(lpca)}
+#' \dontrun{
+#' plot(lpca)
+#' }
 #' @export
 plot.lpca <- function(object, type = c("trace", "loadings"), ...) {
   library("ggplot2")
@@ -336,6 +338,23 @@ plot.lpca <- function(object, type = c("trace", "loadings"), ...) {
   }
   
   return(p)
+}
+
+#' @title Print logistic PCA object
+#' 
+#' @param x logistic PCA object
+#' @param ... Additional arguments
+#' 
+#' @export
+print.lpca <- function(x, ...) {
+  cat(nrow(x$PCs), "rows and ")
+  cat(nrow(x$U), "columns\n")
+  cat("Rank", ncol(x$U), "solution with M =", x$M, "\n")
+  cat("\n")
+  cat(round(x$prop_deviance_expl * 100, 1), "% of deviance explained\n", sep = "")
+  cat(x$iters, "iterations to converge\n")
+  
+  invisible(x)
 }
 
 #' @title CV for logistic PCA

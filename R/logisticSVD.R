@@ -51,7 +51,7 @@
 #' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 #' 
 #' # run logistic SVD on it
-#' lsvd = logisticSVD(mat, k = 1, main_effects = FALSE)
+#' lsvd = logisticSVD(mat, k = 1, main_effects = FALSE, use_irlba = FALSE)
 #' 
 #' # Logistic SVD likely does a better job finding latent features
 #' # than standard SVD
@@ -222,7 +222,7 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
 #' mat_new = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit_new)) * 1.0
 #' 
 #' # run logistic PCA on it
-#' lsvd = logisticSVD(mat, k = 1, main_effects = FALSE)
+#' lsvd = logisticSVD(mat, k = 1, main_effects = FALSE, use_irlba = FALSE)
 #' 
 #' A_new = predict(lsvd, mat_new)
 #' @export
@@ -313,7 +313,7 @@ predict.lsvd <- function(object, newdata, quiet = TRUE, max_iters = 1000, conv_c
 #' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 #' 
 #' # run logistic SVD on it
-#' lsvd = logisticSVD(mat, k = 1, main_effects = FALSE)
+#' lsvd = logisticSVD(mat, k = 1, main_effects = FALSE, use_irlba = FALSE)
 #' 
 #' # construct fitted probability matrix
 #' fit = fitted(lsvd, type = "response")
@@ -351,9 +351,11 @@ fitted.lsvd <- function(object, type = c("link", "response"), ...) {
 #' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 #' 
 #' # run logistic SVD on it
-#' lsvd = logisticSVD(mat, k = 2, main_effects = FALSE)
+#' lsvd = logisticSVD(mat, k = 2, main_effects = FALSE, use_irlba = FALSE)
 #' 
-#' # plot(lsvd)
+#' \dontrun{
+#' plot(lsvd)
+#' }
 #' @export
 plot.lsvd <- function(object, type = c("trace", "loadings"), ...) {
   library("ggplot2")
@@ -375,6 +377,23 @@ plot.lsvd <- function(object, type = c("trace", "loadings"), ...) {
   }
   
   return(p)
+}
+
+#' @title Print logistic SVD object
+#' 
+#' @param x logistic SVD object
+#' @param ... Additional arguments
+#' 
+#' @export
+print.lsvd <- function(x, ...) {
+  cat(nrow(x$A), "rows and ")
+  cat(nrow(x$B), "columns\n")
+  cat("Rank", ncol(x$B), "solution\n")
+  cat("\n")
+  cat(round(x$prop_deviance_expl * 100, 1), "% of deviance explained\n", sep = "")
+  cat(x$iters, "iterations to converge\n")
+  
+  invisible(x)
 }
 
 #' @title CV for logistic SVD

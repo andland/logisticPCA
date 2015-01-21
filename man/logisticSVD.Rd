@@ -62,7 +62,7 @@ mat_logit = outer(rnorm(rows), rnorm(cols))
 mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 
 # run logistic SVD on it
-lsvd = logisticSVD(mat, k = 1, main_effects = FALSE)
+lsvd = logisticSVD(mat, k = 1, main_effects = FALSE, use_irlba = FALSE)
 
 # Logistic SVD likely does a better job finding latent features
 # than standard SVD

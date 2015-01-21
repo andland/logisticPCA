@@ -27,8 +27,8 @@ mat_logit = outer(rnorm(rows), rnorm(cols))
 mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 
 # run logistic SVD on it
-lsvd = logisticSVD(mat, k = 2, main_effects = FALSE)
+lsvd = logisticSVD(mat, k = 2, main_effects = FALSE, use_irlba = FALSE)
 
-# plot(lsvd)
+\dontrun{plot(lsvd)}
 }
 
