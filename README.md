@@ -6,7 +6,7 @@
 
 To install R, visit [r-project.org/](http://www.r-project.org/).
 
-To install in R, first install `devtools` from CRAN, then run the following commands.
+To install the package, first install `devtools` from CRAN. Then run the following commands.
 ```R
 # install.packages("devtools")
 library("devtools")

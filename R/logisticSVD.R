@@ -406,7 +406,7 @@ print.lsvd <- function(x, ...) {
 #' @param folds if \code{folds} is a scalar, then it is the number of folds. If 
 #'  it is a vector, it should be the same length as the number of rows in \code{x}
 #' @param quiet logical; whether the function should display progress
-#' @param ... Additional arguments
+#' @param ... Additional arguments passed to logisticSVD
 #' 
 #' @return A matrix of the CV log likelihood with \code{k} in rows
 #' 

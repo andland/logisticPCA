@@ -20,8 +20,9 @@
 #' @param mu main effects vector. Only used if \code{main_effects = TRUE}
 #' @param main_effects logical; whether to include main effects in the model
 #' @param ss_factor step size multiplier. Amount by which to multiply the step size. Quadratic 
-#'   convergence can be proven for \code{ss_factor = 1}, but I have found higher values sometimes work 
-#'   better. The default is \code{ss_factor = 4}. If it is not converging, try \code{ss_factor = 1}.
+#'   convergence rate can be proven for \code{ss_factor = 1}, but I have found higher values 
+#'   sometimes work better. The default is \code{ss_factor = 4}. 
+#'   If it is not converging, try \code{ss_factor = 1}.
 #' 
 #' @return An S3 object of class \code{clpca} which is a list with the
 #' following components:
@@ -200,7 +201,7 @@ project.Fantope <- function(x, k) {
   }
   vals = pmin(pmax(vals - theta, 0), 1)
   return(list(H = eig$vectors %*% diag(vals) %*% t(eig$vectors),
-              U = matrix(eig$vectors[, 1:k], nrow(x), k)))
+              U = matrix(eig$vectors[, 1:ceiling(k)], nrow(x), ceiling(k))))
 }
 
 #' @title Predict Convex Logistic PCA scores or reconstruction on new data
@@ -315,4 +316,82 @@ print.clpca <- function(x, ...) {
   cat(x$iters, "iterations to converge\n")
   
   invisible(x)
+}
+
+#' @title CV for convex logistic PCA
+#' 
+#' @description 
+#' Run cross validation on dimension and \code{M} for convex logistic PCA
+#' 
+#' @param x matrix with all binary entries
+#' @param ks the different dimensions \code{k} to try
+#' @param Ms the different approximations to the saturated model \code{M} to try
+#' @param folds if \code{folds} is a scalar, then it is the number of folds. If 
+#'  it is a vector, it should be the same length as the number of rows in \code{x}
+#' @param quiet logical; whether the function should display progress
+#' @param ... Additional arguments passed to convexLogisticPCA
+#' 
+#' @return A matrix of the CV log likelihood with \code{k} in rows and 
+#'  \code{M} in columns
+#' 
+#' @examples
+#' # construct a low rank matrix in the logit scale
+#' rows = 100
+#' cols = 10
+#' set.seed(1)
+#' mat_logit = outer(rnorm(rows), rnorm(cols))
+#' 
+#' # generate a binary matrix
+#' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
+#' 
+#' \dontrun{
+#' loglikes = cv.clpca(mat, ks = 1:9, Ms = 3:6)
+#' plot(loglikes)
+#' }
+#' @export
+cv.clpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...) {
+  q = 2 * as.matrix(x) - 1
+  q[is.na(q)] <- 0
+  
+  if (length(folds) > 1) {
+    # does this work if factor?
+    if (length(unique(folds)) <= 1) {
+      stop("If inputing CV split, must be more than one level")
+    }
+    if (length(folds) != nrow(x)) {
+      stop("if folds is a vector, it should be of same length as nrow(x)")
+    }
+    cv = folds
+  } else {
+    cv = sample(1:folds, nrow(q), replace = TRUE)
+  }
+  
+  log_likes = matrix(0, length(ks), length(Ms),
+                     dimnames = list(k = ks, M = Ms))
+  for (k in ks) {
+    for (M in Ms) {
+      if (!quiet) {
+        cat("k =", k, "M =", M, "")
+      }
+      for (c in unique(cv)) {
+        if (!quiet) {
+          cat(".")
+        }
+        clpca = convexLogisticPCA(x[c != cv, ], k = k, M = M, ...)
+        pred_theta = predict(clpca, newdat = x[c == cv, ], type = "link")
+        log_likes[k == ks, M == Ms] = log_likes[k == ks, M == Ms] + 
+          log_like_Bernoulli(q = q[c == cv, ], theta = pred_theta)
+      }
+      if (!quiet) {
+        cat("", log_likes[k == ks, M == Ms], "\n")
+      }
+    }
+  }
+  class(log_likes) <- c("matrix", "cv.lpca")
+  which_min = which(log_likes == max(log_likes), arr.ind = TRUE)
+  if (!quiet) {
+    cat("Best: k =", ks[which_min[1]], "M =", Ms[which_min[2]], "\n")
+  }
+  
+  return(log_likes)
 }

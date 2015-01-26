@@ -368,7 +368,7 @@ print.lpca <- function(x, ...) {
 #' @param folds if \code{folds} is a scalar, then it is the number of folds. If 
 #'  it is a vector, it should be the same length as the number of rows in \code{x}
 #' @param quiet logical; whether the function should display progress
-#' @param ... Additional arguments
+#' @param ... Additional arguments passed to logisticPCA
 #' 
 #' @return A matrix of the CV log likelihood with \code{k} in rows and 
 #'  \code{M} in columns
@@ -424,7 +424,7 @@ cv.lpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...
         #           sum(log(inv.logit.mat(q[c == cv, ] * pred_theta)))
       }
       if (!quiet) {
-        cat("\n")
+        cat("", log_likes[k == ks, M == Ms], "\n")
       }
     }
   }

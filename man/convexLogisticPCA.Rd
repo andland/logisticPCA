@@ -34,8 +34,9 @@ function will use an eigen-decomposition as starting value}
 \item{main_effects}{logical; whether to include main effects in the model}
 
 \item{ss_factor}{step size multiplier. Amount by which to multiply the step size. Quadratic
-  convergence can be proven for \code{ss_factor = 1}, but I have found higher values sometimes work
-  better. The default is \code{ss_factor = 4}. If it is not converging, try \code{ss_factor = 1}.}
+  convergence rate can be proven for \code{ss_factor = 1}, but I have found higher values
+  sometimes work better. The default is \code{ss_factor = 4}.
+  If it is not converging, try \code{ss_factor = 1}.}
 }
 \value{
 An S3 object of class \code{clpca} which is a list with the
