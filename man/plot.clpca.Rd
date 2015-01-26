@@ -29,6 +29,8 @@ mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 # run convex logistic PCA on it
 clpca = convexLogisticPCA(mat, k = 2, M = 4, main_effects = FALSE)
 
-\dontrun{plot(clpca)}
+\dontrun{
+plot(clpca)
+}
 }
 

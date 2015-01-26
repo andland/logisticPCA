@@ -4,8 +4,11 @@
 
 ## Installation
 
-To install in R,
+To install R, visit [r-project.org/](http://www.r-project.org/).
+
+To install in R, first install `devtools` from CRAN, then run the following commands.
 ```R
-library(devtools)
+# install.packages("devtools")
+library("devtools")
 install_github("andland/logisticPCA")
 ```

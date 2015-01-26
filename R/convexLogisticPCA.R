@@ -53,6 +53,9 @@
 convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE, 
                               max_iters = 1000, conv_criteria = 1e-7, random_start = FALSE,
                               start_H, mu, main_effects = TRUE, ss_factor = 4) {
+  if (any(is.na(x))) {
+    stop("This function currently can't deal with missing values")
+  }
   x = as.matrix(x)
   n = nrow(x)
   d = ncol(x)
@@ -62,10 +65,11 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   
   if (main_effects) {
     if (missing(mu)) {
-      if (any(colMeans(x, na.rm = TRUE) == 0 | colMeans(x, na.rm = TRUE) == 1)) {
+      x_bar = colMeans(x, na.rm = TRUE)
+      if (any(x_bar == 0 | x_bar == 1)) {
         stop("Some column(s) all 0 or 1. Remove and try again.")
       }
-      mu = log(colMeans(x)) / log(1 - colMeans(x))
+      mu = log(x_bar) / log(1 - x_bar)
     }
   } else {
     mu = rep(0, d)
@@ -94,7 +98,7 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   etatX = t(eta_centered) %*% x
   theta = mu_mat + eta_centered %*% H
   
-  loglike = sum(log(inv.logit.mat(q * theta))[q != 0])
+  loglike = log_like_Bernoulli(q = q, theta = theta)
   min_loss = -loglike / sum(q != 0)
   best_HU = HU
   best_loglike = loglike
@@ -108,7 +112,7 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   H_lag = H
   for (m in 1:max_iters) {
     y = H + (m - 2) / (m + 1) * (H - H_lag)
-    y = H
+    # y = H
     H_lag = H
     # y = H
     step = 2 / (M^2 * n * d) * ss_factor
@@ -145,7 +149,7 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   # calculate the null log likelihood for % deviance explained
   # assumes no missing data
   if (main_effects) {
-    null_proportions = colMeans(x)
+    null_proportions = x_bar
   } else {
     null_proportions = rep(0.5, d)
   }
