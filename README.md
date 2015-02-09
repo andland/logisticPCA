@@ -12,3 +12,29 @@ To install the package, first install `devtools` from CRAN. Then run the followi
 library("devtools")
 install_github("andland/logisticPCA")
 ```
+
+## Classes
+Three types of dimensionality reduction are given. For all the functions, the user must supply the desired dimension `k`. The data must be an `n x d` matrix comprised of binary variables (i.e. all `0`s and `1`s).
+
+### Logistic PCA
+`logisticPCA()` estimates the natural parameters of a Bernoulli distribution in a lower dimensional space. This is done by projecting the natural parameters from the saturated model. A rank-`k` projection matrix, or equivalently a loading matrix, is solved for to minimize the Bernoulli deviance. Since the natural parameters from the saturated model are either negative or positive infinity, an additional tuning parameter `M` is needed to approximate them. I usually use `cv.lpca()` to select `M`. Typical values are in the range `3` to `10`. 
+
+`mu` is a main effects vector of length `d` and `U` is the `d x k` loadings matrix.
+
+### Logistic SVD
+`logisticSVD()` estimates the natural parameters by solving a matrix factorization. `mu` is a main effects vector of length `d`, `B` is the `d x k` loadings matrix, and `A` is the `n x k` principal component score matrix.
+
+### Convex Logistic PCA
+`convexLogisticPCA()` relaxes the problem of solving for a projection matrix to solving for a matrix in the `k`-dimensional Fantope, which is the convex hull of rank-`k` projection matrices. This has the advantage that the global minumum can be solved for efficiently. The disadvantage is that the `k`-dimensional Fantope solution may have a rank much larger than `k`, which reduces interpretability. It is also necessary to specify `M` in this function.
+
+`mu` is a main effects vector of length `d`, `H` is the `d x d` Fantope matrix, and `U` is the `d x k` loadings matrix, which are the first `k` eigenvectors of `H`.
+
+## Methods
+Each of the classes has associated methods to make data analysis easier.
+
+* `print()`: Prints a summary of the fitted model.
+* `fitted()`: Fits the low dimensional matrix of either natural parameters or probabilities.
+* `predict()`: Predicts the PCs on new data. Can also predict the low dimensional matrix of natural parameters or probabilities on new data.
+* `plot()`: Plots either the deviance trace or the first two PC loadings using the package `ggplot2`.
+* `cv()`: Runs cross-validation over the rows of the matrix to assess the fit of `M` and/or `k`.
+* `plot.cv()`: Plots the results of the `cv()` method.
