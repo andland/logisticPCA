@@ -299,7 +299,8 @@ fitted.lpca <- function(object, type = c("link", "response"), ...) {
 #' 
 #' @param object logistic PCA object
 #' @param type the type of plot \code{type = "trace"} plots the algorithms progress by
-#' iteration, \code{type = "loadings"} plots the loadings first 2 principal components
+#' iteration, \code{type = "loadings"} plots the first 2 principal component
+#' loadings, \code{type = "scores"} plots the loadings first 2 principal component scores
 #' @param ... Additional arguments
 #' @examples
 #' # construct a low rank matrix in the logit scale
@@ -318,7 +319,7 @@ fitted.lpca <- function(object, type = c("link", "response"), ...) {
 #' plot(lpca)
 #' }
 #' @export
-plot.lpca <- function(object, type = c("trace", "loadings"), ...) {
+plot.lpca <- function(object, type = c("trace", "loadings", "scores"), ...) {
   library("ggplot2")
   type = match.arg(type)
   
@@ -329,6 +330,14 @@ plot.lpca <- function(object, type = c("trace", "loadings"), ...) {
       geom_line()
   } else if (type == "loadings") {
     df = data.frame(object$U)
+    colnames(df) <- paste0("PC", 1:ncol(df))
+    if (ncol(df) == 1) {
+      p <- ggplot2::qplot(PC1, 0, data = df, ylab = NULL)
+    } else {
+      p <- ggplot2::ggplot(df, aes(PC1, PC2)) + geom_point()
+    }
+  } else if (type == "scores") {
+    df = data.frame(object$PCs)
     colnames(df) <- paste0("PC", 1:ncol(df))
     if (ncol(df) == 1) {
       p <- ggplot2::qplot(PC1, 0, data = df, ylab = NULL)
