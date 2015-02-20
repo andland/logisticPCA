@@ -56,6 +56,7 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   # better name for k
   use_irlba = use_irlba && requireNamespace("irlba", quietly = TRUE)
   q = as.matrix(2 * x - 1)
+  missing_mat = is.na(q)
   q[is.na(q)] <- 0 # forces Z to be equal to theta when data is missing
   n = nrow(q)
   d = ncol(q)
@@ -97,7 +98,8 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   qTq = crossprod(q)
   
   loss_trace = numeric(max_iters + 1)
-  theta = outer(rep(1, n), mu) + scale(M * q, center = mu, scale = FALSE) %*% U %*% t(U)
+  eta = M * q + missing_mat * outer(rep(1, n), mu)
+  theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% U %*% t(U)
   loglike <- log_like_Bernoulli(q = q, theta = theta)
   loss_trace[1] = (-loglike) / sum(q!=0)
   ptm <- proc.time()
@@ -113,8 +115,9 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     last_mu = mu
     
     if (solve_M) {
-      Phat = inv.logit.mat(theta)
+      # TODO: Does not incorporate missing
       # Need to check this is correct when missing data
+      Phat = inv.logit.mat(theta)
       M_slope = sum(((x - Phat) * (q %*% U %*% t(U)))[q != 0]) 
       M_curve = -sum((Phat * (1 - Phat) * (q %*% U %*% t(U))^2)[q != 0])
       M = M - M_slope / M_curve
@@ -123,12 +126,13 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     }
     
     Z = as.matrix(theta + 4 * q * (1 - inv.logit.mat(q * theta)))
+    eta = M * q + missing_mat * outer(rep(1, n), mu)
     if (main_effects) {
-      mu = as.numeric(colMeans(Z - (M * q) %*% U %*% t(U)))
+      mu = as.numeric(colMeans(Z - eta %*% U %*% t(U)))
     }
     
-    mat_temp = t(scale(M * q, center = mu, scale = FALSE)) %*% Z
-    mat_temp = mat_temp + t(mat_temp) - M^2 * qTq + n * outer(mu, mu)
+    mat_temp = crossprod(scale(eta, center = mu, scale = FALSE), Z)
+    mat_temp = mat_temp + t(mat_temp) - crossprod(eta) + n * outer(mu, mu)
     
     # irlba sometimes gives poor estimates of e-vectors
     # so I switch to standard eigen if it does
@@ -141,7 +145,8 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
         U = matrix(eig$vectors[, 1:k], d, k)
       }
       
-      theta = outer(rep(1, n), mu) + scale(M * q, center = mu, scale = FALSE) %*% tcrossprod(U)
+      eta = M * q + missing_mat * outer(rep(1, n), mu)
+      theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% tcrossprod(U)
       this_loglike <- log_like_Bernoulli(q = q, theta = theta)
       
       if (!use_irlba | this_loglike>=loglike) {
@@ -189,7 +194,7 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   # calculate the null log likelihood for % deviance explained
   # assumes no missing data
   if (main_effects) {
-    null_proportions = colMeans(x)
+    null_proportions = colMeans(x, na.rm = TRUE)
   } else {
     null_proportions = rep(0.5, d)
   }
@@ -197,9 +202,11 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     (1 - null_proportions) * log(1 - null_proportions)
   null_loglike = sum(null_loglikes[!(null_proportions %in% c(0, 1))]) * n
   
+  eta = M * q + missing_mat * outer(rep(1, n), mu)
+  
   object <- list(mu = mu,
                  U = U,
-                 PCs = scale(M * q, center = mu, scale = FALSE) %*% U,
+                 PCs = scale(eta, center = mu, scale = FALSE) %*% U,
                  M = M,
                  iters = m,
                  loss_trace = loss_trace[1:(m + 1)],
@@ -242,7 +249,9 @@ predict.lpca <- function(object, newdata, type = c("PCs", "link", "response"), .
   if (missing(newdata)) {
     PCs = object$PCs
   } else {
-    eta = ((as.matrix(newdata) * 2) - 1) * object$M
+    q = as.matrix(newdata) * 2 - 1
+    q[is.na(q)] <- 0
+    eta = object$M * q + is.na(q) * outer(rep(1, nrow(newdata)), object$mu)
     PCs = scale(eta, center = object$mu, scale = FALSE) %*% object$U
   }
   
