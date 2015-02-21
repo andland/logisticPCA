@@ -115,18 +115,16 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     last_mu = mu
     
     if (solve_M) {
-      # TODO: Does not incorporate missing
-      # Need to check this is correct when missing data
       Phat = inv.logit.mat(theta)
       M_slope = sum(((x - Phat) * (q %*% U %*% t(U)))[q != 0]) 
       M_curve = -sum((Phat * (1 - Phat) * (q %*% U %*% t(U))^2)[q != 0])
       M = M - M_slope / M_curve
       
-      theta = outer(rep(1, n), mu) + scale(M * q, center = mu, scale = FALSE) %*% tcrossprod(U)
+      eta = M * q + missing_mat * outer(rep(1, n), mu)
+      theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% tcrossprod(U)
     }
     
     Z = as.matrix(theta + 4 * q * (1 - inv.logit.mat(q * theta)))
-    eta = M * q + missing_mat * outer(rep(1, n), mu)
     if (main_effects) {
       mu = as.numeric(colMeans(Z - eta %*% U %*% t(U)))
     }
@@ -188,11 +186,12 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     M = last_M
     m = m - 1
     
-    warning("Algorithm stopped because deviance increased.\nThis should not happen!")
+    if (!solve_M) {
+      warning("Algorithm stopped because deviance increased.\nThis should not happen!")
+    }
   }
   
   # calculate the null log likelihood for % deviance explained
-  # assumes no missing data
   if (main_effects) {
     null_proportions = colMeans(x, na.rm = TRUE)
   } else {
@@ -200,7 +199,7 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   }
   null_loglikes <- null_proportions * log(null_proportions) + 
     (1 - null_proportions) * log(1 - null_proportions)
-  null_loglike = sum(null_loglikes[!(null_proportions %in% c(0, 1))]) * n
+  null_loglike = sum((null_loglikes * colSums(q!=0))[!(null_proportions %in% c(0, 1))])
   
   eta = M * q + missing_mat * outer(rep(1, n), mu)
   

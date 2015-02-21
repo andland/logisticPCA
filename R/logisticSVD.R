@@ -168,13 +168,13 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
   
   # calculate the null log likelihood for % deviance explained
   if (main_effects) {
-    null_proportions = colMeans(x)
+    null_proportions = colMeans(x, na.rm = TRUE)
   } else {
     null_proportions = rep(0.5, d)
   }
   null_loglikes <- null_proportions * log(null_proportions) + 
     (1 - null_proportions) * log(1 - null_proportions)
-  null_loglike = sum(null_loglikes[!(null_proportions %in% c(0, 1))]) * n
+  null_loglike = sum((null_loglikes * colSums(q!=0))[!(null_proportions %in% c(0, 1))])
   
   object = list(mu = mu,
                 A = A,

@@ -156,7 +156,7 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   }
   null_loglikes <- null_proportions * log(null_proportions) + 
     (1 - null_proportions) * log(1 - null_proportions)
-  null_loglike = sum(null_loglikes[!(null_proportions %in% c(0, 1))]) * n
+  null_loglike = sum((null_loglikes * colSums(q!=0))[!(null_proportions %in% c(0, 1))])
   
   object = list(mu = mu,
                 H = best_HU$H,
