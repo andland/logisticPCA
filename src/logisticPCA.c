@@ -59,8 +59,10 @@ SEXP compute_loglik(SEXP q, SEXP theta)
       qval = REAL(q)[ind] * REAL(theta)[ind];
       tmp = logistic(qval);
       
-      if (ISNA(tmp) && !ISNA(qval))
+      if (REAL(q)[ind] == 0.0)
+      {
         tmp = 1.;
+      }
       
       loglik += log(tmp);
     }
