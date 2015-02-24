@@ -249,7 +249,7 @@ predict.lsvd <- function(object, newdata, quiet = TRUE, max_iters = 1000, conv_c
     } else {
       if (!random_start) {
         # assumes A is initially matrix of 0's and B is orthonormal
-        A = 4 * (x - inv.logit.mat(mu_mat)) %*% B
+        A = 4 * ((q + 1) / 2 - inv.logit.mat(mu_mat)) %*% B
       } else {
         A = matrix(runif(n * k, -1, 1), n, k) 
       }

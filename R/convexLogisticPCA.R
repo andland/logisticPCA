@@ -54,9 +54,9 @@
 convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE, 
                               max_iters = 1000, conv_criteria = 1e-7, random_start = FALSE,
                               start_H, mu, main_effects = TRUE, ss_factor = 4) {
-  if (any(is.na(x))) {
-    stop("This function currently can't deal with missing values")
-  }
+  # if (any(is.na(x))) {
+  #   stop("This function currently can't deal with missing values")
+  # }
   x = as.matrix(x)
   n = nrow(x)
   d = ncol(x)
@@ -86,7 +86,7 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     H = HU$H
   } else {
     if (use_irlba) {
-      udv = irlba(scale(q, center = main_effects, scale = F), nu = k, nv = k)
+      udv = irlba::irlba(scale(q, center = main_effects, scale = F), nu = k, nv = k)
     } else {
       udv = svd(scale(q, center = main_effects, scale = F), nu = k, nv = k)
     }
@@ -96,6 +96,13 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   
   mu_mat = outer(rep(1, n), mu)
   eta_centered = scale(eta, mu, FALSE)
+  
+  # when x is missing eta = mu. So eta_centered is 0
+  eta_centered[q == 0] <- 0
+  
+  # only sum over non-missing x. Equivalent to replacing missing x with 0
+  x[q == 0] <- 0
+  
   etatX = t(eta_centered) %*% x
   theta = mu_mat + eta_centered %*% H
   
@@ -118,7 +125,9 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     # y = H
     step = 2 / (M^2 * n * d) * ss_factor
     
-    etatP = t(eta_centered) %*% inv.logit.mat(mu_mat + eta_centered %*% y)
+    Phat = inv.logit.mat(mu_mat + eta_centered %*% y)
+    Phat[q == 0] <- 0
+    etatP = t(eta_centered) %*% Phat
     deriv = etatX - etatP
     deriv = deriv + t(deriv) - diag(diag(deriv))
     
@@ -239,12 +248,16 @@ predict.clpca <- function(object, newdata, type = c("PCs", "link", "response"), 
       PCs = object$PCs
     } else {
       eta = ((as.matrix(newdata) * 2) - 1) * object$M
-      PCs = scale(eta, center = object$mu, scale = FALSE) %*% object$U
+      eta_centered = scale(eta, center = object$mu, scale = FALSE)
+      eta_centered[is.na(newdata)] <- 0
+      PCs = eta_centered %*% object$U
     }
     return(PCs)
   } else {
-    eta = object$M * (2 * as.matrix(newdata) - 1)
-    theta = outer(rep(1, nrow(eta)), object$mu) + scale(eta, object$mu, FALSE) %*% object$H
+    eta = ((as.matrix(newdata) * 2) - 1) * object$M
+    eta_centered = scale(eta, center = object$mu, scale = FALSE)
+    eta_centered[is.na(newdata)] <- 0
+    theta = outer(rep(1, nrow(eta)), object$mu) + eta_centered %*% object$H
     if (type == "link") {
       return(theta)
     } else {
