@@ -4,6 +4,6 @@
 #' @useDynLib logisticPCA, inv_logit_mat, compute_loglik
 #' @docType package
 #' @title logisticPCA-package
-#' @author Andrew Landgraf
+#' @author Andrew J. Landgraf
 #' @keywords package
 NULL
