@@ -18,7 +18,7 @@ it is a vector, it should be the same length as the number of rows in \code{x}}
 
 \item{quiet}{logical; whether the function should display progress}
 
-\item{...}{Additional arguments passed to logisticPCA}
+\item{...}{Additional arguments passed to \code{logisticPCA}}
 }
 \value{
 A matrix of the CV log likelihood with \code{k} in rows and

@@ -8,7 +8,7 @@
 Dimension reduction techniques for binary data including logistic PCA
 }
 \author{
-Andrew Landgraf
+Andrew J. Landgraf
 }
 \keyword{package}
 
