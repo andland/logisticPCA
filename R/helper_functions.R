@@ -32,5 +32,8 @@ log_like_Bernoulli <- function(x, theta, q) {
     q = 2 * as.matrix(x) - 1
     q[is.na(q)] <- 0
   }
+  if (any(dim(theta) != dim(q))) {
+    stop("Dimensions do not match!")
+  }
   .Call(compute_loglik, q, theta)
 }
