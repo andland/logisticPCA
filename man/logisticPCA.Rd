@@ -6,7 +6,7 @@
 \usage{
 logisticPCA(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   max_iters = 1000, conv_criteria = 1e-05, random_start = FALSE, start_U,
-  start_mu, main_effects = TRUE)
+  start_mu, main_effects = TRUE, validation)
 }
 \arguments{
 \item{x}{matrix with all binary entries}
@@ -33,6 +33,9 @@ function will use an eigen-decomposition as starting value}
 \item{start_mu}{starting value for mu. Only used if \code{main_effects = TRUE}}
 
 \item{main_effects}{logical; whether to include main effects in the model}
+
+\item{validation}{optional validation matrix. If supplied and \code{M = 0}, the
+  validation data is used to solve for \code{M}}
 }
 \value{
 An S3 object of class \code{lpca} which is a list with the

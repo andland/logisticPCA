@@ -18,6 +18,8 @@
 #' @param start_U starting value for the orthogonal matrix
 #' @param start_mu starting value for mu. Only used if \code{main_effects = TRUE}
 #' @param main_effects logical; whether to include main effects in the model
+#' @param validation optional validation matrix. If supplied and \code{M = 0}, the
+#'   validation data is used to solve for \code{M}
 #'
 #' @return An S3 object of class \code{lpca} which is a list with the
 #' following components:
@@ -52,7 +54,7 @@
 #' @export
 logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
                         max_iters = 1000, conv_criteria = 1e-5, random_start = FALSE,
-                        start_U, start_mu, main_effects = TRUE) {
+                        start_U, start_mu, main_effects = TRUE, validation) {
   use_irlba = use_irlba && requireNamespace("irlba", quietly = TRUE)
   q = as.matrix(2 * x - 1)
   missing_mat = is.na(q)
@@ -62,11 +64,17 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   if (M == 0) {
     M = 4
     solve_M = TRUE
+    if (!missing(validation)) {
+      if (ncol(validation) != ncol(x)) {
+        stop("validation does not have the same variables as x")
+      }
+      q_val = as.matrix(2 * validation - 1)
+      q_val[is.na(q_val)] <- 0
+    }
   } else {
     solve_M = FALSE
   }
-  # eta = q * abs(M)
-
+  
   if (main_effects) {
     if (!missing(start_mu)) {
       mu = start_mu
@@ -114,10 +122,18 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     last_mu = mu
 
     if (solve_M) {
-      Phat = inv.logit.mat(theta)
-      M_slope = sum(((x - Phat) * (q %*% tcrossprod(U)))[q != 0])
-      M_curve = -sum((Phat * (1 - Phat) * (q %*% tcrossprod(U))^2)[q != 0])
-      M = M - M_slope / M_curve
+      if (missing(validation)) {
+        Phat = inv.logit.mat(theta)
+        M_slope = sum(((x - Phat) * (q %*% tcrossprod(U)))[q != 0])
+        M_curve = -sum((Phat * (1 - Phat) * (q %*% tcrossprod(U))^2)[q != 0])
+      } else {
+        lpca_obj = structure(list(mu = mu, U = U, M = M),
+                             class = "lpca")
+        Phat = predict(lpca_obj, newdata = validation, type = "response")
+        M_slope = sum(((validation - Phat) * (q_val %*% tcrossprod(U)))[q_val != 0])
+        M_curve = -sum((Phat * (1 - Phat) * (q_val %*% tcrossprod(U))^2)[q_val != 0])
+      }
+      M = max(M - M_slope / M_curve, 0)
 
       eta = M * q + missing_mat * outer(rep(1, n), mu)
       theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% tcrossprod(U)
