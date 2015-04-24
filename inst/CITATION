@@ -1,0 +1,19 @@
+citHeader("To cite logisticPCA in publications use:")
+
+citEntry(entry = "TechReport",
+  title        = "Dimensionality Reduction for Binary Data through the Projection of Natural Parameters",
+  author       = personList(as.person("Andrew J. Landgraf"),
+                   as.person("Yoonkyung Lee")),
+  institution  = "Department of Statistics, The Ohio State University",
+  year         = "2015",
+  number       = "890",
+  url          = "http://www.stat.osu.edu/~yklee/mss/tr890.pdf",
+
+  textVersion  =
+  paste("Andrew J. Landgraf, Yoonkyung Lee (2015).",
+        "Dimensionality Reduction for Binary Data",
+        "through the Projection of Natural Parameters.",
+        "Technical Report 890, Department of Statistics,",
+        "The Ohio State University.",
+        "URL http://www.stat.osu.edu/~yklee/mss/tr890.pdf")
+)
