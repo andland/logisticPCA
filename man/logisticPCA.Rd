@@ -42,7 +42,7 @@ An S3 object of class \code{lpca} which is a list with the
 following components:
 \item{mu}{the main effects}
 \item{U}{a \code{k}-dimentional orthonormal matrix with the loadings}
-\item{PCs}{the princial components}
+\item{PCs}{the princial component scores}
 \item{M}{the parameter inputed or solved for}
 \item{iters}{number of iterations required for convergence}
 \item{loss_trace}{the trace of the average negative log likelihood of the algorithm.
@@ -52,7 +52,7 @@ following components:
    the null model estimates 0 for all natural parameters.}
 }
 \description{
-Dimension reduction for binary data by extending Pearson's
+Dimensionality reduction for binary data by extending Pearson's
 PCA formulation to minimize Binomial deviance
 }
 \examples{

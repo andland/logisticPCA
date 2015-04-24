@@ -1,7 +1,7 @@
 #' @title Logistic Principal Component Analysis
 #'
 #' @description
-#' Dimension reduction for binary data by extending Pearson's
+#' Dimensionality reduction for binary data by extending Pearson's
 #' PCA formulation to minimize Binomial deviance
 #'
 #' @param x matrix with all binary entries
@@ -25,7 +25,7 @@
 #' following components:
 #' \item{mu}{the main effects}
 #' \item{U}{a \code{k}-dimentional orthonormal matrix with the loadings}
-#' \item{PCs}{the princial components}
+#' \item{PCs}{the princial component scores}
 #' \item{M}{the parameter inputed or solved for}
 #' \item{iters}{number of iterations required for convergence}
 #' \item{loss_trace}{the trace of the average negative log likelihood of the algorithm.

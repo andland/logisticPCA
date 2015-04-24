@@ -49,7 +49,7 @@ following components:
    the null model estimates 0 for all natural parameters.}
 }
 \description{
-Dimension reduction for binary data by extending SVD to
+Dimensionality reduction for binary data by extending SVD to
 minimize binomial deviance.
 }
 \examples{

@@ -1,7 +1,7 @@
 #' @title Logistic Singular Value Decomposition
 #' 
 #' @description 
-#' Dimension reduction for binary data by extending SVD to 
+#' Dimensionality reduction for binary data by extending SVD to 
 #' minimize binomial deviance.
 #' 
 #' @param x matrix with all binary entries

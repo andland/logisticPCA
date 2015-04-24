@@ -1,7 +1,7 @@
 #' @title Convex Logistic Principal Component Analysis
 #' 
 #' @description 
-#' Dimension reduction for binary data by extending Pearson's
+#' Dimensionality reduction for binary data by extending Pearson's
 #' PCA formulation to minimize Binomial deviance. The convex relaxation
 #' to projection matrices, the Fantope, is used.
 #' 
@@ -28,8 +28,8 @@
 #' following components:
 #' \item{mu}{the main effects}
 #' \item{H}{a rank \code{k} Fantope matrix}
-#' \item{U}{a \code{k}-dimentional orthonormal matrix with the loadings}
-#' \item{PCs}{the princial components}
+#' \item{U}{a \code{ceiling(k)}-dimentional orthonormal matrix with the loadings}
+#' \item{PCs}{the princial component scores}
 #' \item{M}{the parameter inputed}
 #' \item{iters}{number of iterations required for convergence}
 #' \item{loss_trace}{the trace of the average negative log likelihood using the Fantope matrix}
