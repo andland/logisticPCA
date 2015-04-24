@@ -388,11 +388,6 @@ plot.lsvd <- function(object, type = c("trace", "loadings", "scores"), ...) {
   return(p)
 }
 
-#' @title Print logistic SVD object
-#' 
-#' @param x logistic SVD object
-#' @param ... Additional arguments
-#' 
 #' @export
 print.lsvd <- function(x, ...) {
   cat(nrow(x$A), "rows and ")

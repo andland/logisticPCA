@@ -373,11 +373,6 @@ plot.lpca <- function(object, type = c("trace", "loadings", "scores"), ...) {
   return(p)
 }
 
-#' @title Print logistic PCA object
-#'
-#' @param x logistic PCA object
-#' @param ... Additional arguments
-#'
 #' @export
 print.lpca <- function(x, ...) {
   cat(nrow(x$PCs), "rows and ")

@@ -323,11 +323,6 @@ plot.clpca <- function(object, type = c("trace", "loadings", "scores"), ...) {
   return(p)
 }
 
-#' @title Print convex logistic PCA object
-#' 
-#' @param x convex logistic PCA object
-#' @param ... Additional arguments
-#' 
 #' @export
 print.clpca <- function(x, ...) {
   cat(nrow(x$PCs), "rows and ")
