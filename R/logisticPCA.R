@@ -68,13 +68,14 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
       if (ncol(validation) != ncol(x)) {
         stop("validation does not have the same variables as x")
       }
-      q_val = as.matrix(2 * validation - 1)
+      validation = as.matrix(validation)
+      q_val = 2 * validation - 1
       q_val[is.na(q_val)] <- 0
     }
   } else {
     solve_M = FALSE
   }
-  
+
   if (main_effects) {
     if (!missing(start_mu)) {
       mu = start_mu
@@ -124,14 +125,14 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     if (solve_M) {
       if (missing(validation)) {
         Phat = inv.logit.mat(theta)
-        M_slope = sum(((x - Phat) * (q %*% tcrossprod(U)))[q != 0])
-        M_curve = -sum((Phat * (1 - Phat) * (q %*% tcrossprod(U))^2)[q != 0])
+        M_slope = sum(((Phat - x) * (q %*% tcrossprod(U)))[q != 0])
+        M_curve = sum((Phat * (1 - Phat) * (q %*% tcrossprod(U))^2)[q != 0])
       } else {
         lpca_obj = structure(list(mu = mu, U = U, M = M),
                              class = "lpca")
         Phat = predict(lpca_obj, newdata = validation, type = "response")
-        M_slope = sum(((validation - Phat) * (q_val %*% tcrossprod(U)))[q_val != 0])
-        M_curve = -sum((Phat * (1 - Phat) * (q_val %*% tcrossprod(U))^2)[q_val != 0])
+        M_slope = sum(((Phat - validation) * (q_val %*% tcrossprod(U)))[q_val != 0])
+        M_curve = sum((Phat * (1 - Phat) * (q_val %*% tcrossprod(U))^2)[q_val != 0])
       }
       M = max(M - M_slope / M_curve, 0)
 
