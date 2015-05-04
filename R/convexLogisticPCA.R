@@ -92,7 +92,7 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
       if (any(x_bar == 0 | x_bar == 1)) {
         stop("Some column(s) all 0 or 1. Remove and try again.")
       }
-      mu = log(x_bar) / log(1 - x_bar)
+      mu = log(x_bar) - log(1 - x_bar)
     }
   } else {
     mu = rep(0, d)
