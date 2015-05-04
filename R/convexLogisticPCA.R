@@ -69,6 +69,9 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     weights = 1.0
     sum_weights = sum(!is.na(x))
   } else {
+    if (!all(dim(weights) == dim(x))) {
+      stop("x and weights are not the same dimension")
+    }
     weights[is.na(x)] <- 0
     if (any(is.na(weights))) {
       stop("Can't have NA in weights")
@@ -76,15 +79,12 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     if (any(weights < 0)) {
       stop("weights must be non-negative")
     }
-    if (!all(dim(weights) == dim(x))) {
-      stop("x and weights are not the same dimension")
-    }
     sum_weights = sum(weights)
   }
   
   if (main_effects) {
     if (missing(mu)) {
-      if (length(missing) == 1) {
+      if (length(weights) == 1) {
         x_bar = colMeans(x, na.rm = TRUE)
       } else {
         x_bar = colSums(x * weights, na.rm = TRUE) / colSums(weights, na.rm = TRUE)
