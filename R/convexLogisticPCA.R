@@ -23,6 +23,7 @@
 #'   convergence rate can be proven for \code{ss_factor = 1}, but I have found higher values 
 #'   sometimes work better. The default is \code{ss_factor = 4}. 
 #'   If it is not converging, try \code{ss_factor = 1}.
+#' @param weights an optional matrix of the same size as the \code{x} with non-negative weights
 #' 
 #' @return An S3 object of class \code{clpca} which is a list with the
 #' following components:
@@ -53,7 +54,7 @@
 #' @export
 convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE, 
                               max_iters = 1000, conv_criteria = 1e-7, random_start = FALSE,
-                              start_H, mu, main_effects = TRUE, ss_factor = 4) {
+                              start_H, mu, main_effects = TRUE, ss_factor = 4, weights) {
   # if (any(is.na(x))) {
   #   stop("This function currently can't deal with missing values")
   # }
@@ -64,9 +65,30 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   q[is.na(q)] <- 0
   eta = q * abs(M)
   
+  if (missing(weights)) {
+    weights = 1.0
+    sum_weights = sum(!is.na(x))
+  } else {
+    weights[is.na(x)] <- 0
+    if (any(is.na(weights))) {
+      stop("Can't have NA in weights")
+    }
+    if (any(weights < 0)) {
+      stop("weights must be non-negative")
+    }
+    if (!all(dim(weights) == dim(x))) {
+      stop("x and weights are not the same dimension")
+    }
+    sum_weights = sum(weights)
+  }
+  
   if (main_effects) {
     if (missing(mu)) {
-      x_bar = colMeans(x, na.rm = TRUE)
+      if (length(missing) == 1) {
+        x_bar = colMeans(x, na.rm = TRUE)
+      } else {
+        x_bar = colSums(x * weights, na.rm = TRUE) / colSums(weights, na.rm = TRUE)
+      }
       if (any(x_bar == 0 | x_bar == 1)) {
         stop("Some column(s) all 0 or 1. Remove and try again.")
       }
@@ -101,16 +123,16 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   eta_centered[q == 0] <- 0
   
   # Lipschitz constant
-  L = sum(eta_centered^2) / 2
+  L = sum(eta_centered^2) * max(weights) / 2
   
   # only sum over non-missing x. Equivalent to replacing missing x with 0
   x[q == 0] <- 0
   
-  etatX = t(eta_centered) %*% x
+  etatX = t(eta_centered) %*% (weights * x)
   theta = mu_mat + eta_centered %*% H
   
-  loglike = log_like_Bernoulli(q = q, theta = theta)
-  min_loss = -loglike / sum(q != 0)
+  loglike = log_like_Bernoulli_weighted(q = q, theta = theta, weights)
+  min_loss = -loglike / sum_weights
   best_HU = HU
   best_loglike = loglike
   if (!quiet) {
@@ -130,7 +152,7 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     
     Phat = inv.logit.mat(mu_mat + eta_centered %*% y)
     Phat[q == 0] <- 0
-    etatP = t(eta_centered) %*% Phat
+    etatP = t(eta_centered) %*% (Phat * weights)
     deriv = etatX - etatP
     deriv = deriv + t(deriv) - diag(diag(deriv))
     
@@ -139,12 +161,12 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     H = HU$H
     
     theta = mu_mat + eta_centered %*% H
-    loglike = log_like_Bernoulli(q = q, theta = theta)
-    loss_trace[m + 1] = -loglike / sum(q != 0)
+    loglike = log_like_Bernoulli_weighted(q = q, theta = theta, weights)
+    loss_trace[m + 1] = -loglike / sum_weights
     
     proj_theta = mu_mat + eta_centered %*% HU$U %*% t(HU$U)
-    proj_loglike = log_like_Bernoulli(q = q, theta = proj_theta)
-    proj_loss_trace[m + 1] = -proj_loglike / sum(q!=0)
+    proj_loglike = log_like_Bernoulli_weighted(q = q, theta = proj_theta, weights)
+    proj_loss_trace[m + 1] = -proj_loglike / sum_weights
     
     if (!quiet) {
       cat(m,"  ",loss_trace[m + 1],"  ",proj_loss_trace[m+1],"\n")
@@ -161,14 +183,16 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   
   # calculate the null log likelihood for % deviance explained
   # assumes no missing data
-  if (main_effects) {
-    null_proportions = x_bar
-  } else {
-    null_proportions = rep(0.5, d)
-  }
-  null_loglikes <- null_proportions * log(null_proportions) + 
-    (1 - null_proportions) * log(1 - null_proportions)
-  null_loglike = sum((null_loglikes * colSums(q!=0))[!(null_proportions %in% c(0, 1))])
+  # if (main_effects) {
+  #   null_proportions = x_bar
+  # } else {
+  #   null_proportions = rep(0.5, d)
+  # }
+  # null_loglikes <- null_proportions * log(null_proportions) + 
+  #   (1 - null_proportions) * log(1 - null_proportions)
+  # null_loglike = sum((null_loglikes * colSums(q!=0))[!(null_proportions %in% c(0, 1))])
+  theta_null = outer(rep(1, n), mu)
+  null_loglike = log_like_Bernoulli_weighted(q = q, theta = theta_null, weights)
   
   object = list(mu = mu,
                 H = best_HU$H,
@@ -370,6 +394,7 @@ print.clpca <- function(x, ...) {
 #' }
 #' @export
 cv.clpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...) {
+  # TODO: does not support weights
   q = 2 * as.matrix(x) - 1
   q[is.na(q)] <- 0
   

@@ -6,7 +6,7 @@
 \usage{
 convexLogisticPCA(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   max_iters = 1000, conv_criteria = 1e-07, random_start = FALSE, start_H,
-  mu, main_effects = TRUE, ss_factor = 4)
+  mu, main_effects = TRUE, ss_factor = 4, weights)
 }
 \arguments{
 \item{x}{matrix with all binary entries}
@@ -35,9 +35,11 @@ function will use an eigen-decomposition as starting value}
 \item{main_effects}{logical; whether to include main effects in the model}
 
 \item{ss_factor}{step size multiplier. Amount by which to multiply the step size. Quadratic
-  convergence rate can be proven for \code{ss_factor = 1}, but I have found higher values
-  sometimes work better. The default is \code{ss_factor = 4}.
-  If it is not converging, try \code{ss_factor = 1}.}
+convergence rate can be proven for \code{ss_factor = 1}, but I have found higher values
+sometimes work better. The default is \code{ss_factor = 4}.
+If it is not converging, try \code{ss_factor = 1}.}
+
+\item{weights}{an optional matrix of the same size as the \code{x} with non-negative weights}
 }
 \value{
 An S3 object of class \code{clpca} which is a list with the

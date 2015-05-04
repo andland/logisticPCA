@@ -37,3 +37,8 @@ log_like_Bernoulli <- function(x, theta, q) {
   }
   .Call(compute_loglik, q, theta)
 }
+
+log_like_Bernoulli_weighted <- function(q, theta, weights) {
+  # sum(weights * (x * theta - log(1 + exp(theta))), na.rm = TRUE)
+  sum((weights * log(inv.logit.mat(q * theta)))[q != 0])
+}
