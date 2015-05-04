@@ -345,21 +345,20 @@ fitted.lpca <- function(object, type = c("link", "response"), ...) {
 #' }
 #' @export
 plot.lpca <- function(object, type = c("trace", "loadings", "scores"), ...) {
-  library("ggplot2")
   type = match.arg(type)
 
   if (type == "trace") {
     df = data.frame(Iteration = 0:object$iters,
                     NegativeLogLikelihood = object$loss_trace)
-    p <- ggplot2::ggplot(df, aes(Iteration, NegativeLogLikelihood)) +
-      geom_line()
+    p <- ggplot2::ggplot(df, ggplot2::aes(Iteration, NegativeLogLikelihood)) +
+      ggplot2::geom_line()
   } else if (type == "loadings") {
     df = data.frame(object$U)
     colnames(df) <- paste0("PC", 1:ncol(df))
     if (ncol(df) == 1) {
       p <- ggplot2::qplot(PC1, 0, data = df, ylab = NULL)
     } else {
-      p <- ggplot2::ggplot(df, aes(PC1, PC2)) + geom_point()
+      p <- ggplot2::ggplot(df, ggplot2::aes(PC1, PC2)) + ggplot2::geom_point()
     }
   } else if (type == "scores") {
     df = data.frame(object$PCs)
@@ -367,7 +366,7 @@ plot.lpca <- function(object, type = c("trace", "loadings", "scores"), ...) {
     if (ncol(df) == 1) {
       p <- ggplot2::qplot(PC1, 0, data = df, ylab = NULL)
     } else {
-      p <- ggplot2::ggplot(df, aes(PC1, PC2)) + geom_point()
+      p <- ggplot2::ggplot(df, ggplot2::aes(PC1, PC2)) + ggplot2::geom_point()
     }
   }
 
@@ -490,17 +489,15 @@ cv.lpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...
 #' }
 #' @export
 plot.cv.lpca <- function(object, ...) {
-  library(ggplot2)
-  library(reshape2)
-  df = melt(-object, value.name = "NegLogLikelihood")
+  df = reshape2::melt(-object, value.name = "NegLogLikelihood")
   if (ncol(object) == 1) {
     df$M = factor(df$M)
-    p <- ggplot(df, aes(k, NegLogLikelihood, colour = M)) +
-      geom_line()
+    p <- ggplot2::ggplot(df, ggplot2::aes(k, NegLogLikelihood, colour = M)) +
+      ggplot2::geom_line()
   } else {
     df$k = factor(df$k)
-    p <- ggplot(df, aes(M, NegLogLikelihood, colour = k)) +
-      geom_line()
+    p <- ggplot2::ggplot(df, ggplot2::aes(M, NegLogLikelihood, colour = k)) +
+      ggplot2::geom_line()
   }
   return(p)
 }
