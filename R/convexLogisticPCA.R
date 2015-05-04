@@ -65,7 +65,7 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   q[is.na(q)] <- 0
   eta = q * abs(M)
   
-  if (missing(weights)) {
+  if (missing(weights) || length(weights) == 1) {
     weights = 1.0
     sum_weights = sum(!is.na(x))
   } else {
