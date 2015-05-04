@@ -100,6 +100,9 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   # when x is missing eta = mu. So eta_centered is 0
   eta_centered[q == 0] <- 0
   
+  # Lipschitz constant
+  L = sum(eta_centered^2) / 2
+  
   # only sum over non-missing x. Equivalent to replacing missing x with 0
   x[q == 0] <- 0
   
@@ -123,7 +126,7 @@ convexLogisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     # y = H
     H_lag = H
     # y = H
-    step = 2 / (M^2 * n * d) * ss_factor
+    step = ss_factor / L
     
     Phat = inv.logit.mat(mu_mat + eta_centered %*% y)
     Phat[q == 0] <- 0
