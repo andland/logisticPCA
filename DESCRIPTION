@@ -12,8 +12,7 @@ Description: Dimensionality reduction techniques for binary data including logis
 License: MIT + file LICENSE
 URL: https://github.com/andland/logisticPCA
 Imports:
-    ggplot2,
-    reshape2
+    ggplot2
 Suggests:
     irlba,
     testthat

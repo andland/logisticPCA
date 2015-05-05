@@ -489,7 +489,13 @@ cv.lpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...
 #' }
 #' @export
 plot.cv.lpca <- function(object, ...) {
-  df = reshape2::melt(-object, value.name = "NegLogLikelihood")
+  # replaces reshape2::melt(-object, value.name = "NegLogLikelihood")
+  Ms = type.convert(colnames(object))
+  ks = type.convert(rownames(object))
+  df = data.frame(k = rep(ks, times = length(Ms)),
+                  M = rep(Ms, each = length(ks)),
+                  NegLogLikelihood = as.vector(-object))
+  
   if (ncol(object) == 1) {
     df$M = factor(df$M)
     p <- ggplot2::ggplot(df, ggplot2::aes(k, NegLogLikelihood, colour = M)) +
