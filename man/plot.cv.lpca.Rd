@@ -4,10 +4,10 @@
 \alias{plot.cv.lpca}
 \title{Plot CV for logistic PCA}
 \usage{
-\method{plot}{cv.lpca}(object, ...)
+\method{plot}{cv.lpca}(x, ...)
 }
 \arguments{
-\item{object}{a \code{cv.lpca} object}
+\item{x}{a \code{cv.lpca} object}
 
 \item{...}{Additional arguments}
 }

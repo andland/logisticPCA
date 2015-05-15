@@ -4,10 +4,10 @@
 \alias{plot.lsvd}
 \title{Plot logistic SVD}
 \usage{
-\method{plot}{lsvd}(object, type = c("trace", "loadings", "scores"), ...)
+\method{plot}{lsvd}(x, type = c("trace", "loadings", "scores"), ...)
 }
 \arguments{
-\item{object}{logistic SVD object}
+\item{x}{logistic SVD object}
 
 \item{type}{the type of plot \code{type = "trace"} plots the algorithms progress by
 iteration, \code{type = "loadings"} plots the first 2 principal component

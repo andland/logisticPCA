@@ -4,10 +4,10 @@
 \alias{plot.clpca}
 \title{Plot convex logistic PCA}
 \usage{
-\method{plot}{clpca}(object, type = c("trace", "loadings", "scores"), ...)
+\method{plot}{clpca}(x, type = c("trace", "loadings", "scores"), ...)
 }
 \arguments{
-\item{object}{convex logistic PCA object}
+\item{x}{convex logistic PCA object}
 
 \item{type}{the type of plot \code{type = "trace"} plots the algorithms progress by
 iteration, \code{type = "loadings"} plots the first 2 PC loadings,

@@ -336,7 +336,7 @@ fitted.lsvd <- function(object, type = c("link", "response"), ...) {
 #' @description 
 #' Plots the results of a logistic SVD
 #' 
-#' @param object logistic SVD object
+#' @param x logistic SVD object
 #' @param type the type of plot \code{type = "trace"} plots the algorithms progress by
 #' iteration, \code{type = "loadings"} plots the first 2 principal component
 #' loadings, \code{type = "scores"} plots the loadings first 2 principal component scores
@@ -358,16 +358,16 @@ fitted.lsvd <- function(object, type = c("link", "response"), ...) {
 #' plot(lsvd)
 #' }
 #' @export
-plot.lsvd <- function(object, type = c("trace", "loadings", "scores"), ...) {
+plot.lsvd <- function(x, type = c("trace", "loadings", "scores"), ...) {
   type = match.arg(type)
   
   if (type == "trace") {
-    df = data.frame(Iteration = 0:object$iters,
-                    NegativeLogLikelihood = object$loss_trace)
+    df = data.frame(Iteration = 0:x$iters,
+                    NegativeLogLikelihood = x$loss_trace)
     p <- ggplot2::ggplot(df, ggplot2::aes(Iteration, NegativeLogLikelihood)) + 
       ggplot2::geom_line()
   } else if (type == "loadings") {
-    df = data.frame(object$B)
+    df = data.frame(x$B)
     colnames(df) <- paste0("PC", 1:ncol(df))
     if (ncol(df) == 1) {
       p <- ggplot2::qplot(PC1, 0, data = df, ylab = NULL)
@@ -375,7 +375,7 @@ plot.lsvd <- function(object, type = c("trace", "loadings", "scores"), ...) {
       p <- ggplot2::ggplot(df, ggplot2::aes(PC1, PC2)) + ggplot2::geom_point()
     }
   } else if (type == "scores") {
-    df = data.frame(object$A)
+    df = data.frame(x$A)
     colnames(df) <- paste0("PC", 1:ncol(df))
     if (ncol(df) == 1) {
       p <- ggplot2::qplot(PC1, 0, data = df, ylab = NULL)

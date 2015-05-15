@@ -322,7 +322,7 @@ fitted.lpca <- function(object, type = c("link", "response"), ...) {
 #' @description
 #' Plots the results of a logistic PCA
 #'
-#' @param object logistic PCA object
+#' @param x logistic PCA object
 #' @param type the type of plot \code{type = "trace"} plots the algorithms progress by
 #' iteration, \code{type = "loadings"} plots the first 2 principal component
 #' loadings, \code{type = "scores"} plots the loadings first 2 principal component scores
@@ -344,16 +344,16 @@ fitted.lpca <- function(object, type = c("link", "response"), ...) {
 #' plot(lpca)
 #' }
 #' @export
-plot.lpca <- function(object, type = c("trace", "loadings", "scores"), ...) {
+plot.lpca <- function(x, type = c("trace", "loadings", "scores"), ...) {
   type = match.arg(type)
 
   if (type == "trace") {
-    df = data.frame(Iteration = 0:object$iters,
-                    NegativeLogLikelihood = object$loss_trace)
+    df = data.frame(Iteration = 0:x$iters,
+                    NegativeLogLikelihood = x$loss_trace)
     p <- ggplot2::ggplot(df, ggplot2::aes(Iteration, NegativeLogLikelihood)) +
       ggplot2::geom_line()
   } else if (type == "loadings") {
-    df = data.frame(object$U)
+    df = data.frame(x$U)
     colnames(df) <- paste0("PC", 1:ncol(df))
     if (ncol(df) == 1) {
       p <- ggplot2::qplot(PC1, 0, data = df, ylab = NULL)
@@ -361,7 +361,7 @@ plot.lpca <- function(object, type = c("trace", "loadings", "scores"), ...) {
       p <- ggplot2::ggplot(df, ggplot2::aes(PC1, PC2)) + ggplot2::geom_point()
     }
   } else if (type == "scores") {
-    df = data.frame(object$PCs)
+    df = data.frame(x$PCs)
     colnames(df) <- paste0("PC", 1:ncol(df))
     if (ncol(df) == 1) {
       p <- ggplot2::qplot(PC1, 0, data = df, ylab = NULL)
@@ -470,7 +470,7 @@ cv.lpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...
 #' @description
 #' Plot cross validation results logistic PCA
 #'
-#' @param object a \code{cv.lpca} object
+#' @param x a \code{cv.lpca} object
 #' @param ... Additional arguments
 #'
 #' @examples
@@ -488,15 +488,15 @@ cv.lpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...
 #' plot(loglikes)
 #' }
 #' @export
-plot.cv.lpca <- function(object, ...) {
-  # replaces reshape2::melt(-object, value.name = "NegLogLikelihood")
-  Ms = type.convert(colnames(object))
-  ks = type.convert(rownames(object))
+plot.cv.lpca <- function(x, ...) {
+  # replaces reshape2::melt(-x, value.name = "NegLogLikelihood")
+  Ms = type.convert(colnames(x))
+  ks = type.convert(rownames(x))
   df = data.frame(k = rep(ks, times = length(Ms)),
                   M = rep(Ms, each = length(ks)),
-                  NegLogLikelihood = as.vector(-object))
+                  NegLogLikelihood = as.vector(-x))
   
-  if (ncol(object) == 1) {
+  if (ncol(x) == 1) {
     df$M = factor(df$M)
     p <- ggplot2::ggplot(df, ggplot2::aes(k, NegLogLikelihood, colour = M)) +
       ggplot2::geom_line()

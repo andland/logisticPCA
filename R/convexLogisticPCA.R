@@ -298,7 +298,7 @@ predict.clpca <- function(object, newdata, type = c("PCs", "link", "response"), 
 #' @description 
 #' Plots the results of a convex logistic PCA
 #' 
-#' @param object convex logistic PCA object
+#' @param x convex logistic PCA object
 #' @param type the type of plot \code{type = "trace"} plots the algorithms progress by
 #' iteration, \code{type = "loadings"} plots the first 2 PC loadings, 
 #' \code{type = "scores"} plots the first 2 PC scores
@@ -320,16 +320,16 @@ predict.clpca <- function(object, newdata, type = c("PCs", "link", "response"), 
 #' plot(clpca)
 #' }
 #' @export
-plot.clpca <- function(object, type = c("trace", "loadings", "scores"), ...) {
+plot.clpca <- function(x, type = c("trace", "loadings", "scores"), ...) {
   type = match.arg(type)
   
   if (type == "trace") {
-    df = data.frame(Iteration = 0:object$iters,
-                    NegativeLogLikelihood = object$loss_trace)
+    df = data.frame(Iteration = 0:x$iters,
+                    NegativeLogLikelihood = x$loss_trace)
     p <- ggplot2::ggplot(df, ggplot2::aes(Iteration, NegativeLogLikelihood)) + 
       ggplot2::geom_line()
   } else if (type == "loadings") {
-    df = data.frame(object$U)
+    df = data.frame(x$U)
     colnames(df) <- paste0("PC", 1:ncol(df))
     if (ncol(df) == 1) {
       p <- ggplot2::qplot(PC1, 0, data = df, ylab = NULL)
@@ -337,7 +337,7 @@ plot.clpca <- function(object, type = c("trace", "loadings", "scores"), ...) {
       p <- ggplot2::ggplot(df, ggplot2::aes(PC1, PC2)) + ggplot2::geom_point()
     }
   } else if (type == "scores") {
-    df = data.frame(object$PCs)
+    df = data.frame(x$PCs)
     colnames(df) <- paste0("PC", 1:ncol(df))
     if (ncol(df) == 1) {
       p <- ggplot2::qplot(PC1, 0, data = df, ylab = NULL)

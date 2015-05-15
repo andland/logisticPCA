@@ -4,10 +4,10 @@
 \alias{plot.lpca}
 \title{Plot logistic PCA}
 \usage{
-\method{plot}{lpca}(object, type = c("trace", "loadings", "scores"), ...)
+\method{plot}{lpca}(x, type = c("trace", "loadings", "scores"), ...)
 }
 \arguments{
-\item{object}{logistic PCA object}
+\item{x}{logistic PCA object}
 
 \item{type}{the type of plot \code{type = "trace"} plots the algorithms progress by
 iteration, \code{type = "loadings"} plots the first 2 principal component
