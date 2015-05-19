@@ -8,7 +8,7 @@ ByteCompile: yes
 Author: Andrew J. Landgraf
 Maintainer: Andrew J. Landgraf <landgraf.5@osu.edu>
 Description: Dimensionality reduction techniques for binary data including logistic
-    PCA
+    PCA.
 License: MIT + file LICENSE
 URL: https://github.com/andland/logisticPCA
 Imports:
