@@ -5,7 +5,7 @@
 \title{Convex Logistic Principal Component Analysis}
 \usage{
 convexLogisticPCA(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
-  max_iters = 1000, conv_criteria = 1e-07, random_start = FALSE, start_H,
+  max_iters = 1000, conv_criteria = 1e-06, random_start = FALSE, start_H,
   mu, main_effects = TRUE, ss_factor = 4, weights)
 }
 \arguments{
