@@ -6,10 +6,14 @@
 ## R CMD check results
 There were no ERRORs or WARNINGs. 
 
-There are 2 NOTEs:
+There are 2 NOTEs, both related to the fact that this is a new package:
 
-* This is a new package
-* global variables. Need to fix http://stackoverflow.com/a/12429344
+* checking CRAN incoming feasibility ... NOTE
+Maintainer: ‘Andrew J. Landgraf <andland@gmail.com>’
+New submission
+
+* checking package dependencies ... NOTE
+  No repository set, so cyclic dependency check skipped
 
 ## Downstream dependencies
 There are no downstream dependencies as this is a new package
