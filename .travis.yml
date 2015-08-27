@@ -8,8 +8,10 @@ r_binary_packages:
   - ggplot2
 
 env:
- global:
-   - CRAN: http://cran.rstudio.com
+  global:
+    - NOT_CRAN=true
+
+before_install: echo "options(repos = c(CRAN='http://cran.rstudio.com'))" > ~/.Rprofile
 
 notifications:
   email:
