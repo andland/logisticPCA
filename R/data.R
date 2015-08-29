@@ -1,0 +1,26 @@
+#' @title United States Congressional Voting Records 1984
+#' 
+#' @description 
+#' This data set includes votes for each of the U.S. House of Representatives 
+#' Congressmen on the 16 key votes identified by the CQA. The CQA lists nine 
+#' different types of votes: voted for, paired for, and announced for (these 
+#' three simplified to yea), voted against, paired against, and announced against 
+#' (these three simplified to nay), voted present, voted present to avoid conflict 
+#' of interest, and did not vote or otherwise make a position known (these three 
+#' simplified to an unknown disposition).
+#'
+#' @format A matrix with all binary or missing entries. There are 435 rows corresponding
+#' members of congress and 16 columns representing the bills being voted on. The row 
+#' names refer to the political party of the members of congress
+#'
+#' @source 
+#' Congressional Quarterly Almanac, 98th Congress, 
+#' 2nd session 1984, Volume XL: Congressional Quarterly Inc., 
+#' Washington, D.C., 1985
+#' 
+#' Data converted to a matrix from:
+#' 
+#' Lichman, M. (2013). UCI Machine Learning Repository 
+#' [http://archive.ics.uci.edu/ml]. Irvine, CA: University of California, 
+#' School of Information and Computer Science.
+"house_votes84"

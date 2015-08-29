@@ -10,6 +10,7 @@ Maintainer: Andrew J. Landgraf <andland@gmail.com>
 Description: Dimensionality reduction techniques for binary data including logistic
     PCA.
 License: MIT + file LICENSE
+LazyData: true
 URL: https://github.com/andland/logisticPCA
 Imports: 
     ggplot2
