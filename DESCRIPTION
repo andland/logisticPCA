@@ -11,8 +11,10 @@ Description: Dimensionality reduction techniques for binary data including logis
     PCA.
 License: MIT + file LICENSE
 URL: https://github.com/andland/logisticPCA
-Imports:
+Imports: 
     ggplot2
-Suggests:
+Suggests: 
     irlba,
-    testthat
+    testthat,
+    knitr
+VignetteBuilder: knitr
