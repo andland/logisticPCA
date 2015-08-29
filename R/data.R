@@ -23,4 +23,8 @@
 #' Lichman, M. (2013). UCI Machine Learning Repository 
 #' [http://archive.ics.uci.edu/ml]. Irvine, CA: University of California, 
 #' School of Information and Computer Science.
+#' 
+#' @examples
+#' data(house_votes84)
+#' congress_lpca = logisticPCA(house_votes84, k = 2, M = 4)
 "house_votes84"

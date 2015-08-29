@@ -30,5 +30,9 @@ three simplified to yea), voted against, paired against, and announced against
 of interest, and did not vote or otherwise make a position known (these three
 simplified to an unknown disposition).
 }
+\examples{
+data(house_votes84)
+congress_lpca = logisticPCA(house_votes84, k = 2, M = 4)
+}
 \keyword{datasets}
 
