@@ -1,10 +1,10 @@
 ---
-title: "An Introduction to logisticPCA"
-author: "Andrew Landgraf"
+title: "An Introduction to the `logisticPCA` R Package"
+author: "Andrew J. Landgraf"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{An Introduction to logisticPCA}
+  %\VignetteIndexEntry{An Introduction to the `logisticPCA` R Package}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---

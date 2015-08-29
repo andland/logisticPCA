@@ -21,6 +21,8 @@ colnames(house_votes84) = c("handicapped-infants",
 
 save(house_votes84, file = "data/house_votes84.rdata", compress = "xz")
 
+# another file data(House2001, package = "gnm")
+
 # library(logisticPCA)
 # cv = cv.lpca(votes84_mat, 2, Ms = 1:10)
 # plot(cv)
