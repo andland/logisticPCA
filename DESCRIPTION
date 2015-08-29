@@ -2,11 +2,11 @@ Package: logisticPCA
 Type: Package
 Title: Binary Dimensionality Reduction
 Version: 0.1
-Date: 2015-03-11
+Date: 2015-08-27
 NeedsCompilation: yes
 ByteCompile: yes
 Author: Andrew J. Landgraf
-Maintainer: Andrew J. Landgraf <landgraf.5@osu.edu>
+Maintainer: Andrew J. Landgraf <andland@gmail.com>
 Description: Dimensionality reduction techniques for binary data including logistic
     PCA.
 License: MIT + file LICENSE

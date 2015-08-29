@@ -350,23 +350,27 @@ plot.lpca <- function(x, type = c("trace", "loadings", "scores"), ...) {
   if (type == "trace") {
     df = data.frame(Iteration = 0:x$iters,
                     NegativeLogLikelihood = x$loss_trace)
-    p <- ggplot2::ggplot(df, ggplot2::aes(Iteration, NegativeLogLikelihood)) +
+    p <- ggplot2::ggplot(df, ggplot2::aes_string("Iteration", "NegativeLogLikelihood")) +
       ggplot2::geom_line()
   } else if (type == "loadings") {
     df = data.frame(x$U)
     colnames(df) <- paste0("PC", 1:ncol(df))
     if (ncol(df) == 1) {
-      p <- ggplot2::qplot(PC1, 0, data = df, ylab = NULL)
+      df$PC2 = 0
+      p <- ggplot2::ggplot(df, ggplot2::aes_string("PC1", "PC2")) + ggplot2::geom_point() + 
+        ggplot2::labs(y = NULL)
     } else {
-      p <- ggplot2::ggplot(df, ggplot2::aes(PC1, PC2)) + ggplot2::geom_point()
+      p <- ggplot2::ggplot(df, ggplot2::aes_string("PC1", "PC2")) + ggplot2::geom_point()
     }
   } else if (type == "scores") {
     df = data.frame(x$PCs)
     colnames(df) <- paste0("PC", 1:ncol(df))
     if (ncol(df) == 1) {
-      p <- ggplot2::qplot(PC1, 0, data = df, ylab = NULL)
+      df$PC2 = 0
+      p <- ggplot2::ggplot(df, ggplot2::aes_string("PC1", "PC2")) + ggplot2::geom_point() + 
+        ggplot2::labs(y = NULL)
     } else {
-      p <- ggplot2::ggplot(df, ggplot2::aes(PC1, PC2)) + ggplot2::geom_point()
+      p <- ggplot2::ggplot(df, ggplot2::aes_string("PC1", "PC2")) + ggplot2::geom_point()
     }
   }
 
@@ -498,11 +502,11 @@ plot.cv.lpca <- function(x, ...) {
   
   if (ncol(x) == 1) {
     df$M = factor(df$M)
-    p <- ggplot2::ggplot(df, ggplot2::aes(k, NegLogLikelihood, colour = M)) +
+    p <- ggplot2::ggplot(df, ggplot2::aes_string("k", "NegLogLikelihood", colour = "M")) +
       ggplot2::geom_line()
   } else {
     df$k = factor(df$k)
-    p <- ggplot2::ggplot(df, ggplot2::aes(M, NegLogLikelihood, colour = k)) +
+    p <- ggplot2::ggplot(df, ggplot2::aes_string("M", "NegLogLikelihood", colour = "k")) +
       ggplot2::geom_line()
   }
   return(p)

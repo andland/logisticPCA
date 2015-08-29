@@ -364,23 +364,27 @@ plot.lsvd <- function(x, type = c("trace", "loadings", "scores"), ...) {
   if (type == "trace") {
     df = data.frame(Iteration = 0:x$iters,
                     NegativeLogLikelihood = x$loss_trace)
-    p <- ggplot2::ggplot(df, ggplot2::aes(Iteration, NegativeLogLikelihood)) + 
+    p <- ggplot2::ggplot(df, ggplot2::aes_string("Iteration", "NegativeLogLikelihood")) + 
       ggplot2::geom_line()
   } else if (type == "loadings") {
     df = data.frame(x$B)
     colnames(df) <- paste0("PC", 1:ncol(df))
     if (ncol(df) == 1) {
-      p <- ggplot2::qplot(PC1, 0, data = df, ylab = NULL)
+      df$PC2 = 0
+      p <- ggplot2::ggplot(df, ggplot2::aes_string("PC1", "PC2")) + ggplot2::geom_point() + 
+        ggplot2::labs(y = NULL)
     } else {
-      p <- ggplot2::ggplot(df, ggplot2::aes(PC1, PC2)) + ggplot2::geom_point()
+      p <- ggplot2::ggplot(df, ggplot2::aes_string("PC1", "PC2")) + ggplot2::geom_point()
     }
   } else if (type == "scores") {
     df = data.frame(x$A)
     colnames(df) <- paste0("PC", 1:ncol(df))
     if (ncol(df) == 1) {
-      p <- ggplot2::qplot(PC1, 0, data = df, ylab = NULL)
+      df$PC2 = 0
+      p <- ggplot2::ggplot(df, ggplot2::aes_string("PC1", "PC2")) + ggplot2::geom_point() + 
+        ggplot2::labs(y = NULL)
     } else {
-      p <- ggplot2::ggplot(df, ggplot2::aes(PC1, PC2)) + ggplot2::geom_point()
+      p <- ggplot2::ggplot(df, ggplot2::aes_string("PC1", "PC2")) + ggplot2::geom_point()
     }
   }
   
