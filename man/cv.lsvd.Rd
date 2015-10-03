@@ -19,7 +19,7 @@ it is a vector, it should be the same length as the number of rows in \code{x}}
 \item{...}{Additional arguments passed to logisticSVD}
 }
 \value{
-A matrix of the CV log likelihood with \code{k} in rows
+A matrix of the CV negative log likelihood with \code{k} in rows
 }
 \description{
 Run cross validation on dimension for logistic SVD
@@ -35,8 +35,8 @@ mat_logit = outer(rnorm(rows), rnorm(cols))
 mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 
 \dontrun{
-loglikes = cv.lsvd(mat, ks = 1:9)
-plot(loglikes)
+negloglikes = cv.lsvd(mat, ks = 1:9)
+plot(negloglikes)
 }
 }
 

@@ -113,10 +113,10 @@ logpca_cv = cv.lpca(house_votes84, ks = 2, Ms = 1:10)
 plot(logpca_cv)
 ```
 
-It looks like the optimal `M` is `r which.max(logpca_cv)`, which we can use to fit with all the data. We will also use the same `M` for the convex formulation.
+It looks like the optimal `M` is `r which.min(logpca_cv)`, which we can use to fit with all the data. We will also use the same `M` for the convex formulation.
 ```{r lpca}
-logpca_model = logisticPCA(house_votes84, k = 2, M = which.max(logpca_cv))
-clogpca_model = convexLogisticPCA(house_votes84, k = 2, M = which.max(logpca_cv))
+logpca_model = logisticPCA(house_votes84, k = 2, M = which.min(logpca_cv))
+clogpca_model = convexLogisticPCA(house_votes84, k = 2, M = which.min(logpca_cv))
 ```
 
 Each of the formulations has a plot method to make it easier to see the results of the fit and assess convergence. There are three options for the `type` of plot. The first is `type = "trace"`, which plots the deviance as a function of iteration. For logistic PCA and logistic SVD, the deviance should decrease at each iteration, but not necessarily for convex logistic PCA. For example, convex logistic PCA converged in `r length(clogpca_model$loss_trace) - 1` iterations.

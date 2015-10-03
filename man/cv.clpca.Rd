@@ -21,7 +21,7 @@ it is a vector, it should be the same length as the number of rows in \code{x}}
 \item{...}{Additional arguments passed to convexLogisticPCA}
 }
 \value{
-A matrix of the CV log likelihood with \code{k} in rows and
+A matrix of the CV negative log likelihood with \code{k} in rows and
  \code{M} in columns
 }
 \description{
@@ -38,8 +38,8 @@ mat_logit = outer(rnorm(rows), rnorm(cols))
 mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 
 \dontrun{
-loglikes = cv.clpca(mat, ks = 1:9, Ms = 3:6)
-plot(loglikes)
+negloglikes = cv.clpca(mat, ks = 1:9, Ms = 3:6)
+plot(negloglikes)
 }
 }
 

@@ -415,7 +415,7 @@ print.lsvd <- function(x, ...) {
 #' @param quiet logical; whether the function should display progress
 #' @param ... Additional arguments passed to logisticSVD
 #' 
-#' @return A matrix of the CV log likelihood with \code{k} in rows
+#' @return A matrix of the CV negative log likelihood with \code{k} in rows
 #' 
 #' @examples
 #' # construct a low rank matrix in the logit scale
@@ -428,8 +428,8 @@ print.lsvd <- function(x, ...) {
 #' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 #' 
 #' \dontrun{
-#' loglikes = cv.lsvd(mat, ks = 1:9)
-#' plot(loglikes)
+#' negloglikes = cv.lsvd(mat, ks = 1:9)
+#' plot(negloglikes)
 #' }
 #' @export
 cv.lsvd <- function(x, ks, folds = 5, quiet = TRUE, ...) {
@@ -470,5 +470,5 @@ cv.lsvd <- function(x, ks, folds = 5, quiet = TRUE, ...) {
     cat("Best: k =", ks[which_max], "\n")
   }
   
-  return(log_likes)
+  return(-log_likes)
 }

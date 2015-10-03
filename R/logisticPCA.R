@@ -402,7 +402,7 @@ print.lpca <- function(x, ...) {
 #' @param quiet logical; whether the function should display progress
 #' @param ... Additional arguments passed to \code{logisticPCA}
 #'
-#' @return A matrix of the CV log likelihood with \code{k} in rows and
+#' @return A matrix of the CV negative log likelihood with \code{k} in rows and
 #'  \code{M} in columns
 #'
 #' @examples
@@ -416,8 +416,8 @@ print.lpca <- function(x, ...) {
 #' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 #'
 #' \dontrun{
-#' loglikes = cv.lpca(mat, ks = 1:9, Ms = 3:6)
-#' plot(loglikes)
+#' negloglikes = cv.lpca(mat, ks = 1:9, Ms = 3:6)
+#' plot(negloglikes)
 #' }
 #' @export
 cv.lpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...) {
@@ -456,7 +456,7 @@ cv.lpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...
         #           sum(log(inv.logit.mat(q[c == cv, ] * pred_theta)))
       }
       if (!quiet) {
-        cat("", log_likes[k == ks, M == Ms], "\n")
+        cat("", -log_likes[k == ks, M == Ms], "\n")
       }
     }
   }
@@ -466,7 +466,7 @@ cv.lpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...
     cat("Best: k =", ks[which_min[1]], "M =", Ms[which_min[2]], "\n")
   }
 
-  return(log_likes)
+  return(-log_likes)
 }
 
 #' @title Plot CV for logistic PCA
@@ -488,8 +488,8 @@ cv.lpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...
 #' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 #'
 #' \dontrun{
-#' loglikes = cv.lpca(dat, ks = 1:9, Ms = 3:6)
-#' plot(loglikes)
+#' negloglikes = cv.lpca(dat, ks = 1:9, Ms = 3:6)
+#' plot(negloglikes)
 #' }
 #' @export
 plot.cv.lpca <- function(x, ...) {
@@ -498,7 +498,7 @@ plot.cv.lpca <- function(x, ...) {
   ks = type.convert(rownames(x))
   df = data.frame(k = rep(ks, times = length(Ms)),
                   M = rep(Ms, each = length(ks)),
-                  NegLogLikelihood = as.vector(-x))
+                  NegLogLikelihood = as.vector(x))
   
   if (ncol(x) == 1) {
     df$M = factor(df$M)

@@ -377,7 +377,7 @@ print.clpca <- function(x, ...) {
 #' @param quiet logical; whether the function should display progress
 #' @param ... Additional arguments passed to convexLogisticPCA
 #'
-#' @return A matrix of the CV log likelihood with \code{k} in rows and
+#' @return A matrix of the CV negative log likelihood with \code{k} in rows and
 #'  \code{M} in columns
 #'
 #' @examples
@@ -391,8 +391,8 @@ print.clpca <- function(x, ...) {
 #' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 #'
 #' \dontrun{
-#' loglikes = cv.clpca(mat, ks = 1:9, Ms = 3:6)
-#' plot(loglikes)
+#' negloglikes = cv.clpca(mat, ks = 1:9, Ms = 3:6)
+#' plot(negloglikes)
 #' }
 #' @export
 cv.clpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...) {
@@ -430,7 +430,7 @@ cv.clpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ..
           log_like_Bernoulli(q = q[c == cv, ], theta = pred_theta)
       }
       if (!quiet) {
-        cat("", log_likes[k == ks, M == Ms], "\n")
+        cat("", -log_likes[k == ks, M == Ms], "\n")
       }
     }
   }
@@ -440,5 +440,5 @@ cv.clpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ..
     cat("Best: k =", ks[which_min[1]], "M =", Ms[which_min[2]], "\n")
   }
 
-  return(log_likes)
+  return(-log_likes)
 }
