@@ -40,7 +40,7 @@ Logistic PCA extends [Pearson (1901)'s](http://stat.smmu.edu.cn/history/pearson1
 $$ \frac{1}{n} \sum_{i = 1}^n \| (\mathbf{x}_i - \boldsymbol{\mu}) - \mathbf{U}\mathbf{U}^T (\mathbf{x}_i - \boldsymbol{\mu}) \|^2, $$
 over $\boldsymbol{\mu}$ and $d \times k$ orthonormal matrix $\mathbf{U}$.
 
-We re-interpret this and use generalized linear model theory. If $X$ is distributed Gaussian, the natural parameter is $E(X)$ and the natural parameter from the saturated model is $X$ itself. Pearson's formulation can be interpretted as projecting the natural parameters from the saturated model to minimize the Gaussian deviance (squared error).
+We re-interpret this and use generalized linear model theory. If $X$ is distributed Gaussian, the natural parameter is $E(X)$ and the natural parameter from the saturated model is $X$ itself. Pearson's formulation can be interpreted as projecting the natural parameters from the saturated model to minimize the Gaussian deviance (squared error).
 
 To extend PCA to binary data, we need to instead project the natural parameters from the Bernoulli saturated model and minimize the Bernoulli deviance. If $X$ is distributed Bernoulli, the natural parameter from the saturated model is $\infty$ if $X = 1$ and $-\infty$ if $X = 0$. To make this computationally feasible, we use a large number $\pm m$ instead of $\pm \infty$.
 
@@ -80,7 +80,7 @@ data("house_votes84")
 
 The three formulations described above are implemented in the functions `logisticSVD`, `logisticPCA`, and `convexLogisticPCA`. They return S3 objects of classes `lsvd`, `lpca`, and `clpca` respectively. `logisticSVD` returns `mu`, `A`, and `B`, `logisticPCA` returns `mu` and `U`, and `convexLogisticPCA` returns `mu` and `H`, the $d \times d$ Fantope matrix. All of them take a binary data matrix as the first argument (which can include missing data) and the rank of the approximation `k` as the second argument. 
 
-Additionally, for `logisticPCA` and `convexLogisticPCA`, it is necessesary to specify `M`, which is used to approximate the natural paramters from saturated model. Larger values of `M` give fitted probabilities closer to 0 or 1, and smaller values give fitter probabilities closer to 0.5. The functions `cv.lpca` and `cv.clpca` perform cross-validation to help select `M`.
+Additionally, for `logisticPCA` and `convexLogisticPCA`, it is necessary to specify `M`, which is used to approximate the natural parameters from saturated model. Larger values of `M` give fitted probabilities closer to 0 or 1, and smaller values give fitter probabilities closer to 0.5. The functions `cv.lpca` and `cv.clpca` perform cross-validation to help select `M`.
 
 This information is summarized in the table below. The returned objects that are in parentheses are useful, but derived from other parameters.
 
@@ -94,6 +94,8 @@ df = data.frame(
 )
 knitr::kable(df, col.names = c("Formulation", "Function", "Class", "Returns", "Specify M?"))
 ```
+
+### Printing and Plotting
 
 For each of the formulations, we will fit the parameters assuming two-dimensional representation. To estimate $\mathbf{A}$ and $\mathbf{B}$, use `logisticSVD`.
 ```{r lsvd}
@@ -117,7 +119,7 @@ logpca_model = logisticPCA(house_votes84, k = 2, M = which.max(logpca_cv))
 clogpca_model = convexLogisticPCA(house_votes84, k = 2, M = which.max(logpca_cv))
 ```
 
-Each of the formulations has a plot method to make it easier to see the results of the fit and assess convergence. There are three options for the `type` of plot. "trace", which plots the deviance as a function of iteration. For logistic PCA and logistic SVD, the deviance should decrease at each iteration, but not necessarily for convex logistic PCA. For example, convex logistic PCA converged in `r length(clogpca_model$loss_trace) - 1` iterations.
+Each of the formulations has a plot method to make it easier to see the results of the fit and assess convergence. There are three options for the `type` of plot. The first is `type = "trace"`, which plots the deviance as a function of iteration. For logistic PCA and logistic SVD, the deviance should decrease at each iteration, but not necessarily for convex logistic PCA. For example, convex logistic PCA converged in `r length(clogpca_model$loss_trace) - 1` iterations.
 ```{r clpca_trace}
 plot(clogpca_model, type = "trace")
 ```
@@ -127,7 +129,7 @@ In contrast, logistic SVD takes `r length(logsvd_model$loss_trace) - 1` iteratio
 plot(logsvd_model, type = "trace")
 ```
 
-With these formulations, each member of congress is approximated in a two-dimensional latent space. Below, we look at the PC scores for the congressmen, colored by their political party.
+With these formulations, each member of congress is approximated in a two-dimensional latent space. Below, we look at the PC scores for the congressmen, colored by their political party. All three formulations do a good job of separating the political parties based on voting record alone.
 ```{r plot, warning=FALSE}
 party = rownames(house_votes84)
 plot(logsvd_model, type = "scores") + geom_point(aes(colour = party)) + ggtitle("Exponential Family PCA")
@@ -146,9 +148,11 @@ The `fitted` function provides fitted values of either probabilities or natural 
 head(fitted(logpca_model, type = "response"))
 ```
 
+This could be useful if some of the binary observations are missing, which in fact this dataset has a lot of. The fitted probabilities give an estimate of the true value.
+
 Finally, suppose after fitting the data, the voting record of a new congressman appears. The `predict` function provides predicted probabilities or natural parameters for that new congressman, based on the previously fit model and the new data. In addition, there is an option to predict the PC scores on the new data. This may be useful if the low-dimensional scores are inputs to some other model.
 
-For example, lets make up five fake congressmen.
+For example, let's make up five fake congressmen.
 
 ```{r fake}
 d = ncol(house_votes84)
