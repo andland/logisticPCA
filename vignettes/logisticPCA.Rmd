@@ -9,80 +9,142 @@ vignette: >
   \usepackage[utf8]{inputenc}
 ---
 
-`logisticPCA` is an R package for dimensionality reduction of binary data. To show how it works, we will create a matrix of rank-1.
-
-```{r setup}
-library(logisticPCA)
-rows = 100
-cols = 10
-set.seed(1)
-A = rnorm(rows)
-B = rnorm(cols)
-theta = outer(A, B)
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=6, fig.height=5)
 ```
 
-Each element in this matrix represents the logit of the probability that that element is a 1, 
+`logisticPCA` is an R package for dimensionality reduction of binary data. Three methods are implemented:
+
+* Exponential family PCA ([Collins et al., 2001](http://machinelearning.wustl.edu/mlpapers/paper_files/nips02-AA27.pdf)) applied to Bernoulli data, using the algorithm of [de Leeuw, 2006](http://www.stat.columbia.edu/~gelman/stuff_for_blog/csda.pdf),
+* Logisitic PCA of [Landgraf and  Lee, 2015](http://www.stat.osu.edu/~yklee/mss/tr890.pdf),
+* The convex relaxation of logistic PCA (ibid).
+
+## Methods Implemented
+
+We assume that there are $n$ observations of $d$-dimensional binary data, which can be represented as an $n \times d$ matrix, $\mathbf{X}$. If we assume that each element, $x_{ij}$, is Bernoulli with probability $p_{ij}$, the natural parameter, $\theta_{ij}$ is the logit of the probability 
 $$
 \theta_{ij} = \log \frac{p_{ij}}{1 - p_{ij}}.
 $$
 
-Next, we generate a binary dataset by using the inverse logit of the $\Theta$ as the probabilities.
-```{r create_mat}
-mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(theta)) * 1.0
-```
+### Exponential Family PCA
 
-Previously, [Collins et al. (2001)](http://papers.nips.cc/paper/2078-a-generalization-of-principal-components-analysis-to-the-exponential-family.pdf) proposed *exponential family PCA* to extend PCA to binary and other types of data. For binary data, they assume that the logit of the probability matrix can be written as a matrix factorization, 
-$$ \mbox{logit}(\mathbf{P}) = \mathbf{A} \mathbf{B}^T, $$
-where $\mathbf{A}$ and $\mathbf{B}$ are of a lower rank, $k$. This is the same assumption that we used to generate the binary data. 
+Collins et al. (2001) proposed *exponential family PCA* to extend PCA to binary and other types of data. For binary data, they assume that the logit of the probability matrix can be written as a matrix factorization, 
+$$ \mbox{logit}(\mathbf{P}) = \mathbf{1}_n \boldsymbol{\mu}^T + \mathbf{A} \mathbf{B}^T, $$
+where $\mathbf{A}$ and $\mathbf{B}$ are of a lower rank, $k$, and $\boldsymbol{\mu}$ is a $d$-dimensional vector of main effects.
 
-We can estimate $\mathbf{A}$ and $\mathbf{B}$ by using `logisticSVD`.
-```{r lsvd}
-logsvd_mod = logisticSVD(mat, k = 1, main_effects = FALSE)
-```
-
-We set `k = 1` because we are assuming that there is a one-dimensional representation (which is the truth). We have set `main_effects = FALSE`. If we instead were to set `main_effects = TRUE`, we would be assuming that there are main effects for the variables, or columns, i.e.
-$$ \mbox{logit}(\mathbf{P}) = \mathbf{1}_n \boldsymbol{\mu}^T + \mathbf{A} \mathbf{B}^T. $$
-
-`logsvd_mod` is a S3 object of class `lsvd`. Printing the object gives a summary of the fit.
-
-```{r printlsvd}
-logsvd_mod
-```
-
-```{r plot}
-plot(logsvd_mod, type = "scores")
-```
-
-
-
-A manuscript describing logistic PCA can be found [here](http://www.stat.osu.edu/~yklee/mss/tr890.pdf).
-
-## Classes
-Three types of dimensionality reduction are given. For all the functions, the user must supply the desired dimension `k`. The data must be an `n x d` matrix comprised of binary variables (i.e. all `0`'s and `1`'s).
+Due to the matrix factorization representation, we will refer to this formulation as logistic SVD below.
 
 ### Logistic PCA
-`logisticPCA()` estimates the natural parameters of a Bernoulli distribution in a lower dimensional space. This is done by projecting the natural parameters from the saturated model. A rank-`k` projection matrix, or equivalently a `d x k` orthogonal matrix `U`, is solved for to minimize the Bernoulli deviance. Since the natural parameters from the saturated model are either negative or positive infinity, an additional tuning parameter `M` is needed to approximate them. You can use `cv.lpca()` to select `M` by cross validation. Typical values are in the range of `3` to `10`. 
 
-`mu` is a main effects vector of length `d` and `U` is the `d x k` loadings matrix.
+Logistic PCA extend's Pearson's (xxxx) initial formulation of principal component analysis. Pearson's formulation seeks to find a rank-$k$ projection of the data which is as close to the original data as possible, in terms of mean squared error. That is, it minimizes,
+$$ \frac{1}{n} \sum_{i = 1}^n \| (\mathbf{x}_i - \boldsymbol{\mu}) - \mathbf{U}\mathbf{U}^T (\mathbf{x}_i - \boldsymbol{\mu}) \|^2, $$
+over $\boldsymbol{\mu}$ and $d \times k$ orthonormal matrix $\mathbf{U}$.
 
-### Logistic SVD
-`logisticSVD()` estimates the natural parameters by a matrix factorization. `mu` is a main effects vector of length `d`, `B` is the `d x k` loadings matrix, and `A` is the `n x k` principal component score matrix.
+We re-interpret this and use generalized linear model theory. If $X$ is distributed Gaussian, the natural parameter is $E(X)$ and the natural parameter from the saturated model is $X$ itself. Pearson's formulation can be interpretted as projecting the natural parameters from the saturated model to minimize the Gaussian deviance (squared error).
+
+To extend PCA to binary data, we need to instead project the natural parameters from the Bernoulli saturated model and minimize the Bernoulli deviance. If $X$ is distributed Bernoulli, the natural parameter from the saturated model is $\infty$ if $X = 1$ and $-\infty$ if $X = 0$. To make this computationally feasible, we use a large number $\pm m$ instead of $\pm \infty$.
+
+Finally, letting $\tilde{\boldsymbol{\theta}}_i$ be the $d$-dimensional vector of natural parameters from the saturated model, the natural parameters are estimated by 
+
+$$ \hat{\boldsymbol{\theta}}_i = \boldsymbol{\mu} - \mathbf{U}\mathbf{U}^T (\tilde{\boldsymbol{\theta}}_i - \boldsymbol{\mu}) $$
+
+and $\boldsymbol{\mu}$ and $\mathbf{U}$ are solved to minimize the Bernoulli deviance,
+
+$$ D(\mathbf{X} | \hat{\boldsymbol{\Theta}}) = \sum_{i = 1}^n \sum_{j = 1}^d -2 x_{ij} \hat{\theta}_{ij} + 2 \log( 1 + \exp(\hat{\theta}_{ij}) ). $$
+
+The main difference between logistic PCA and exponential family PCA is how the principal component scores are represented. Exponential family PCA solves for the PC scores $A$, whereas in logistic PCA (and standard PCA) the PC scores are linear combinations of the natural parameters from the saturated model. The PC scores for the $i$th observation are $\mathbf{U}^T (\tilde{\boldsymbol{\theta}}_i - \boldsymbol{\mu})$.
+
+This gives logistic PCA several benefits over exponential family PCA
+
+* The number of parameters does not increase with the number of observations
+* The principal component scores are easily interpretable as linear functions of the data,
+* Applying principal components to a new set of data only requires a matrix multiplication
 
 ### Convex Logistic PCA
-`convexLogisticPCA()` relaxes the problem of solving for a projection matrix to solving for a matrix in the `k`-dimensional Fantope, which is the convex hull of rank-`k` projection matrices. This has the advantage that the global minumum can be obtained efficiently. The disadvantage is that the `k`-dimensional Fantope solution may have a rank much larger than `k`, which reduces interpretability. It is also necessary to specify `M` in this function.
 
-`mu` is a main effects vector of length `d`, `H` is the `d x d` Fantope matrix, and `U` is the `d x k` loadings matrix, which are the first `k` eigenvectors of `H`.
+Convex logistic PCA is formulated the same way as logistic PCA above except for one difference. Instead of minimizing over rank-$k$ projection matrices, $\mathbf{U}\mathbf{U}^T$, we minimize over the convex hull of rank-$k$ projection matrices, referred to as the Fantope.
 
-## Methods
-Each of the classes has associated methods to make data analysis easier.
+The convex relaxation is not guaranteed to give low-rank solutions, so it may not be appropriate if interpretability is strongly desired. However, since the problem is convex, it can also be solved more quickly and reliably than the formulation with a projection matrix.
 
-* `print()`: Prints a summary of the fitted model.
-* `fitted()`: Fits the low dimensional matrix of either natural parameters or probabilities.
-* `predict()`: Predicts the PCs on new data. Can also predict the low dimensional matrix of natural parameters or probabilities on new data.
-* `plot()`: Either plots the deviance trace, the first two PC loadings, or the first two PC scores using the package `ggplot2`.
+## Example
 
-In addition, there are functions for performing cross validation.
+To show how it works, we use a binary dataset of how the people of the US Congress voted on different bills in 1984. It also includes information on the political party of the members of Congress, which we will use as validation. Use `help(house_votes84)` to see the source of the data.
 
-* `cv.lpca()`, `cv.lsvd()`, `cv.clpca()`: Run cross validation over the rows of the matrix to assess the fit of `M` and/or `k`.
-* `plot.cv()`: Plots the results of the `cv()` method.
+```{r setup}
+library(logisticPCA)
+library(ggplot2)
+data("house_votes84")
+```
+
+The three formulations described above are implemented in the functions `logisticSVD`, `logisticPCA`, and `convexLogisticPCA`. They return S3 objects of classes `lsvd`, `lpca`, and `clpca` respectively. `logisticSVD` returns `mu`, `A`, and `B`, `logisticPCA` returns `mu` and `U`, and `convexLogisticPCA` returns `mu` and `H`, the $d \times d$ Fantope matrix. All of them take a binary data matrix as the first argument (which can include missing data) and the rank of the approximation `k` as the second argument. 
+
+Additionally, for `logisticPCA` and `convexLogisticPCA`, it is necessesary to specify `M`, which is used to approximate the natural paramters from saturated model. Larger values of `M` give fitted probabilities closer to 0 or 1, and smaller values give fitter probabilities closer to 0.5. The functions `cv.lpca` and `cv.clpca` perform cross-validation to help select `M`.
+
+For each of the formulations, we will fit the parameters assuming two-dimensional representation. To estimate $\mathbf{A}$ and $\mathbf{B}$, use `logisticSVD`.
+```{r lsvd}
+logsvd_model = logisticSVD(house_votes84, k = 2)
+```
+
+For this an the other formulations, printing gives a summary of the fit.
+```{r printlsvd}
+logsvd_model
+```
+
+For logistic PCA, we want to first decide which `M` to use with cross validation. We are assuming `k = 2` and trying different `M`s from 1 to 10.
+```{r cvlpca}
+logpca_cv = cv.lpca(house_votes84, ks = 2, Ms = 1:10)
+plot(logpca_cv)
+```
+
+It looks like the optimal `M` is `r which.max(logpca_cv)`, which we can use to fit with all the data. We will also use the same `M` for the convex formulation.
+```{r lpca}
+logpca_model = logisticPCA(house_votes84, k = 2, M = which.max(logpca_cv))
+clogpca_model = convexLogisticPCA(house_votes84, k = 2, M = which.max(logpca_cv))
+```
+
+Each of the formulations has a plot method to make it easier to see the results of the fit and assess convergence. There are three options for the `type` of plot. "trace", which plots the deviance as a function of iteration. For logistic PCA and logistic SVD, the deviance should decrease at each iteration, but not necessarily for convex logistic PCA. For example, convex logistic PCA converged in `r length(clogpca_model$loss_trace) - 1` iterations.
+```{r clpca_trace}
+plot(clogpca_model, type = "trace")
+```
+
+In contrast, logistic SVD takes `r length(logsvd_model$loss_trace) - 1` iterations to converge.
+```{r lsvd_trace}
+plot(logsvd_model, type = "trace")
+```
+
+With these formulations, each member of congress is approximated in a two-dimensional latent space. Below, we look at the PC scores for the congressmen, colored by their political party.
+```{r plot, warning=FALSE}
+party = rownames(house_votes84)
+plot(logsvd_model, type = "scores") + geom_point(aes(colour = party)) + ggtitle("Exponential Family PCA")
+plot(logpca_model, type = "scores") + geom_point(aes(colour = party)) + ggtitle("Logistic PCA")
+plot(clogpca_model, type = "scores") + geom_point(aes(colour = party)) + ggtitle("Convex Logistic PCA")
+```
+
+For convex logistic PCA, we do not necessarily get a two-dimensional space with the Fantope matrix `H`. However, we use the first $k$ eigenvectors of `H` as an approximation.
+
+One can also examine the latent space of the variables by using `type = "loadings"`.
+
+### Fitted and Predicted Estimates
+The `fitted` function provides fitted values of either probabilities or natural parameters. For example,
+
+```{r fitted}
+head(fitted(logpca_model, type = "response"))
+```
+
+Finally, suppose after fitting the data, the voting record of a new congressman appears. The `predict` function provides predicted probabilities or natural parameters for that new congressman, based on the previously fit model and the new data. In addition, there is an option to predict the PC scores on the new data. This may be useful if the low-dimensional scores are inputs to some other model.
+
+For example, lets make up five fake congressmen.
+
+```{r fake}
+d = ncol(house_votes84)
+votes_fake = matrix(sample(c(0, 1), 5 * d, replace = TRUE), 5, d)
+colnames(votes_fake) <- colnames(house_votes84)
+```
+
+Now, we can use the models we fit before to estimate the PC scores of these congressmen in the low-dimensional space. One advantage of logistic PCA is that it is very quick to estimate these scores on new observations, whereas logistic SVD must solve for `A` on the new data.
+
+```{r predict}
+predict(logpca_model, votes_fake, type = "PCs")
+```
+
 
