@@ -36,7 +36,7 @@ Due to the matrix factorization representation, we will refer to this formulatio
 
 ### Logistic PCA
 
-Logistic PCA extend's Pearson's (xxxx) initial formulation of principal component analysis. Pearson's formulation seeks to find a rank-$k$ projection of the data which is as close to the original data as possible, in terms of mean squared error. That is, it minimizes,
+Logistic PCA extends [Pearson (1901)'s](http://stat.smmu.edu.cn/history/pearson1901.pdf) initial formulation of principal component analysis. Pearson's formulation seeks to find a rank-$k$ projection of the data which is as close to the original data as possible, in terms of mean squared error. That is, it minimizes,
 $$ \frac{1}{n} \sum_{i = 1}^n \| (\mathbf{x}_i - \boldsymbol{\mu}) - \mathbf{U}\mathbf{U}^T (\mathbf{x}_i - \boldsymbol{\mu}) \|^2, $$
 over $\boldsymbol{\mu}$ and $d \times k$ orthonormal matrix $\mathbf{U}$.
 
@@ -76,9 +76,24 @@ library(ggplot2)
 data("house_votes84")
 ```
 
+### Classes
+
 The three formulations described above are implemented in the functions `logisticSVD`, `logisticPCA`, and `convexLogisticPCA`. They return S3 objects of classes `lsvd`, `lpca`, and `clpca` respectively. `logisticSVD` returns `mu`, `A`, and `B`, `logisticPCA` returns `mu` and `U`, and `convexLogisticPCA` returns `mu` and `H`, the $d \times d$ Fantope matrix. All of them take a binary data matrix as the first argument (which can include missing data) and the rank of the approximation `k` as the second argument. 
 
 Additionally, for `logisticPCA` and `convexLogisticPCA`, it is necessesary to specify `M`, which is used to approximate the natural paramters from saturated model. Larger values of `M` give fitted probabilities closer to 0 or 1, and smaller values give fitter probabilities closer to 0.5. The functions `cv.lpca` and `cv.clpca` perform cross-validation to help select `M`.
+
+This information is summarized in the table below. The returned objects that are in parentheses are useful, but derived from other parameters.
+
+```{r table, echo=FALSE}
+df = data.frame(
+  Formulation = c("Exponential Family PCA", "Logistic PCA", "Convex Logistic PCA"),
+  Function = c("logisticSVD", "logisticPCA", "convexLogisticPCA"),
+  Class = c("`lsvd`", "`lpca`", "`clpca`"),
+  Returns = c("`mu`, `A`, `B`", "`mu`, `U`, (`PCs`)", "`mu`, `H`, (`U`, `PCs`)"),
+  Specify_M = c("No", "Yes", "Yes")
+)
+knitr::kable(df, col.names = c("Formulation", "Function", "Class", "Returns", "Specify M?"))
+```
 
 For each of the formulations, we will fit the parameters assuming two-dimensional representation. To estimate $\mathbf{A}$ and $\mathbf{B}$, use `logisticSVD`.
 ```{r lsvd}
