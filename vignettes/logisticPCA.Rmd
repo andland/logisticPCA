@@ -40,7 +40,7 @@ Logistic PCA extends [Pearson (1901)'s](http://stat.smmu.edu.cn/history/pearson1
 $$ \frac{1}{n} \sum_{i = 1}^n \| (\mathbf{x}_i - \boldsymbol{\mu}) - \mathbf{U}\mathbf{U}^T (\mathbf{x}_i - \boldsymbol{\mu}) \|^2, $$
 over $\boldsymbol{\mu}$ and $d \times k$ orthonormal matrix $\mathbf{U}$.
 
-We re-interpret this and use generalized linear model theory. If $X$ is distributed Gaussian, the natural parameter is $E(X)$ and the natural parameter from the saturated model is $X$ itself. Pearson's formulation can be interpreted as projecting the natural parameters from the saturated model to minimize the Gaussian deviance (squared error).
+We re-interpret this and use generalized linear model theory. If $X$ is distributed Gaussian, the natural parameter is $E(X)$ and the natural parameter from the saturated model is $X$ itself. Pearson's formulation can be interpreted as projecting the natural parameters from the saturated model ($X$) to minimize the Gaussian deviance (squared error).
 
 To extend PCA to binary data, we need to instead project the natural parameters from the Bernoulli saturated model and minimize the Bernoulli deviance. If $X$ is distributed Bernoulli, the natural parameter from the saturated model is $\infty$ if $X = 1$ and $-\infty$ if $X = 0$. To make this computationally feasible, we use a large number $\pm m$ instead of $\pm \infty$.
 
@@ -52,13 +52,13 @@ and $\boldsymbol{\mu}$ and $\mathbf{U}$ are solved to minimize the Bernoulli dev
 
 $$ D(\mathbf{X} | \hat{\boldsymbol{\Theta}}) = \sum_{i = 1}^n \sum_{j = 1}^d -2 x_{ij} \hat{\theta}_{ij} + 2 \log( 1 + \exp(\hat{\theta}_{ij}) ). $$
 
-The main difference between logistic PCA and exponential family PCA is how the principal component scores are represented. Exponential family PCA solves for the PC scores $A$, whereas in logistic PCA (and standard PCA) the PC scores are linear combinations of the natural parameters from the saturated model. The PC scores for the $i$th observation are $\mathbf{U}^T (\tilde{\boldsymbol{\theta}}_i - \boldsymbol{\mu})$.
+The main difference between logistic PCA and exponential family PCA is how the principal component scores are represented. Exponential family PCA solves for the PC scores $A$, whereas in logistic PCA (and standard PCA) the PC scores are linear combinations of the natural parameters from the saturated model. The PC scores for the $i$th observation are $$\mathbf{U}^T (\tilde{\boldsymbol{\theta}}_i - \boldsymbol{\mu}). $$
 
 This gives logistic PCA several benefits over exponential family PCA
 
-* The number of parameters does not increase with the number of observations
+* The number of parameters does not increase with the number of observations,
 * The principal component scores are easily interpretable as linear functions of the data,
-* Applying principal components to a new set of data only requires a matrix multiplication
+* Applying principal components to a new set of data only requires a matrix multiplication.
 
 ### Convex Logistic PCA
 
@@ -80,9 +80,9 @@ data("house_votes84")
 
 The three formulations described above are implemented in the functions `logisticSVD`, `logisticPCA`, and `convexLogisticPCA`. They return S3 objects of classes `lsvd`, `lpca`, and `clpca` respectively. `logisticSVD` returns `mu`, `A`, and `B`, `logisticPCA` returns `mu` and `U`, and `convexLogisticPCA` returns `mu` and `H`, the $d \times d$ Fantope matrix. All of them take a binary data matrix as the first argument (which can include missing data) and the rank of the approximation `k` as the second argument. 
 
-Additionally, for `logisticPCA` and `convexLogisticPCA`, it is necessary to specify `M`, which is used to approximate the natural parameters from saturated model. Larger values of `M` give fitted probabilities closer to 0 or 1, and smaller values give fitter probabilities closer to 0.5. The functions `cv.lpca` and `cv.clpca` perform cross-validation to help select `M`.
+Additionally, for `logisticPCA` and `convexLogisticPCA`, it is necessary to specify `M`, which is used to approximate the natural parameters from saturated model. Larger values of `M` give fitted probabilities closer to 0 or 1, and smaller values give fitter probabilities closer to 0.5. The functions `cv.lpca` and `cv.clpca` perform row-wise cross-validation to help select `M`.
 
-This information is summarized in the table below. The returned objects that are in parentheses are useful, but derived from other parameters.
+This information is summarized in the table below. The returned objects that are in parentheses are derived from other parameters.
 
 ```{r table, echo=FALSE}
 df = data.frame(
@@ -137,7 +137,7 @@ plot(logpca_model, type = "scores") + geom_point(aes(colour = party)) + ggtitle(
 plot(clogpca_model, type = "scores") + geom_point(aes(colour = party)) + ggtitle("Convex Logistic PCA")
 ```
 
-For convex logistic PCA, we do not necessarily get a two-dimensional space with the Fantope matrix `H`. However, we use the first $k$ eigenvectors of `H` as an approximation.
+For convex logistic PCA, we do not necessarily get a two-dimensional space with the Fantope matrix `H`. However, we use the first $k$ eigenvectors of `H` as an estimate of `U`.
 
 One can also examine the latent space of the variables by using `type = "loadings"`.
 
@@ -156,8 +156,9 @@ For example, let's make up five fake congressmen.
 
 ```{r fake}
 d = ncol(house_votes84)
-votes_fake = matrix(sample(c(0, 1), 5 * d, replace = TRUE), 5, d)
-colnames(votes_fake) <- colnames(house_votes84)
+votes_fake = matrix(sample(c(0, 1), 5 * d, replace = TRUE), 5, d,
+                    dimnames = list(NULL, colnames(house_votes84)))
+
 ```
 
 Now, we can use the models we fit before to estimate the PC scores of these congressmen in the low-dimensional space. One advantage of logistic PCA is that it is very quick to estimate these scores on new observations, whereas logistic SVD must solve for `A` on the new data.
