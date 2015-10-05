@@ -14,3 +14,6 @@ New submission
 
 ## Downstream dependencies
 There are no downstream dependencies as this is a new package
+
+## Resubmission
+Fixed import issues with stats and utils that occurred in the development version
