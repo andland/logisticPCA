@@ -132,9 +132,9 @@ plot(logsvd_model, type = "trace")
 With these formulations, each member of congress is approximated in a two-dimensional latent space. Below, we look at the PC scores for the congressmen, colored by their political party. All three formulations do a good job of separating the political parties based on voting record alone.
 ```{r plot, warning=FALSE}
 party = rownames(house_votes84)
-plot(logsvd_model, type = "scores") + geom_point(aes(colour = party)) + ggtitle("Exponential Family PCA")
-plot(logpca_model, type = "scores") + geom_point(aes(colour = party)) + ggtitle("Logistic PCA")
-plot(clogpca_model, type = "scores") + geom_point(aes(colour = party)) + ggtitle("Convex Logistic PCA")
+plot(logsvd_model, type = "scores") + geom_point(aes(colour = party)) + ggtitle("Exponential Family PCA") + scale_colour_manual(values = c("blue", "red"))
+plot(logpca_model, type = "scores") + geom_point(aes(colour = party)) + ggtitle("Logistic PCA") + scale_colour_manual(values = c("blue", "red"))
+plot(clogpca_model, type = "scores") + geom_point(aes(colour = party)) + ggtitle("Convex Logistic PCA") + scale_colour_manual(values = c("blue", "red"))
 ```
 
 For convex logistic PCA, we do not necessarily get a two-dimensional space with the Fantope matrix `H`. However, we use the first $k$ eigenvectors of `H` as an estimate of `U`.
