@@ -8,7 +8,7 @@
 
 To install R, visit [r-project.org/](http://www.r-project.org/).
 
-The package can be installed by downloading from CRAN, 
+The package can be installed by downloading from CRAN.
 ```R
 install.packages("logisticPCA")
 ```
