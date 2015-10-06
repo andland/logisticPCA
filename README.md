@@ -1,6 +1,6 @@
 # Logistic PCA
 
-[![Build Status](https://travis-ci.org/andland/logisticPCA.png?branch=master)](https://travis-ci.org/andland/logisticPCA)
+[![Build Status](https://travis-ci.org/andland/logisticPCA.png?branch=master)](https://travis-ci.org/andland/logisticPCA) [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/logisticPCA)](http://cran.r-project.org/web/packages/logisticPCA)
 
 `logisticPCA` is an R package for dimensionality reduction of binary data. Please note that it is still in the very early stages of development and the conventions will possibly change in the future. A manuscript describing logistic PCA can be found [here](http://www.stat.osu.edu/~yklee/mss/tr890.pdf).
 
@@ -8,7 +8,12 @@
 
 To install R, visit [r-project.org/](http://www.r-project.org/).
 
-To install the package, first install `devtools` from CRAN. Then run the following commands.
+The package can be installed by downloading from CRAN, 
+```R
+install.packages("logisticPCA")
+```
+
+To install the development version, first install `devtools` from CRAN. Then run the following commands.
 ```R
 # install.packages("devtools")
 library("devtools")
@@ -27,7 +32,7 @@ Three types of dimensionality reduction are given. For all the functions, the us
 `logisticSVD()` estimates the natural parameters by a matrix factorization. `mu` is a main effects vector of length `d`, `B` is the `d x k` loadings matrix, and `A` is the `n x k` principal component score matrix.
 
 ### Convex Logistic PCA
-`convexLogisticPCA()` relaxes the problem of solving for a projection matrix to solving for a matrix in the `k`-dimensional Fantope, which is the convex hull of rank-`k` projection matrices. This has the advantage that the global minumum can be obtained efficiently. The disadvantage is that the `k`-dimensional Fantope solution may have a rank much larger than `k`, which reduces interpretability. It is also necessary to specify `M` in this function.
+`convexLogisticPCA()` relaxes the problem of solving for a projection matrix to solving for a matrix in the `k`-dimensional Fantope, which is the convex hull of rank-`k` projection matrices. This has the advantage that the global minimum can be obtained efficiently. The disadvantage is that the `k`-dimensional Fantope solution may have a rank much larger than `k`, which reduces interpretability. It is also necessary to specify `M` in this function.
 
 `mu` is a main effects vector of length `d`, `H` is the `d x d` Fantope matrix, and `U` is the `d x k` loadings matrix, which are the first `k` eigenvectors of `H`.
 
