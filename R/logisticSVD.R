@@ -114,7 +114,7 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
     cat("0 hours elapsed\n")
   }
   
-  for (m in 1:max_iters) {
+  for (i in 1:max_iters) {
     last_mu = mu
     last_A = A
     last_B = B
@@ -136,30 +136,30 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
     
     theta = outer(rep(1, n), mu) + tcrossprod(A, B)
     loglike <- log_like_Bernoulli(q = q, theta = theta)
-    loss_trace[m+1] = -loglike / sum(q != 0)
+    loss_trace[i + 1] = -loglike / sum(q != 0)
     
     if (!quiet) {
       time_elapsed = as.numeric(proc.time() - ptm)[3]
-      tot_time = max_iters / m * time_elapsed
+      tot_time = max_iters / i * time_elapsed
       time_remain = tot_time - time_elapsed
-      cat(m, "  ", loss_trace[m+1], "")
+      cat(i, "  ", loss_trace[i + 1], "")
       cat(round(time_elapsed / 3600, 1), "hours elapsed. Max", 
           round(time_remain / 3600, 1), "hours remain.\n")
     }
-    if (m > 4) {
-      if ((loss_trace[m] - loss_trace[m+1]) < conv_criteria)
+    if (i > 4) {
+      if ((loss_trace[i] - loss_trace[i + 1]) < conv_criteria)
         break
     }
-    if (m == max_iters) {
+    if (i == max_iters) {
       warning("Algorithm ran ", max_iters, " iterations without converging.
               You may want to run it longer.")
     }
   }
-  if (loss_trace[m] < loss_trace[m+1]) {
+  if (loss_trace[i] < loss_trace[i + 1]) {
     mu = last_mu
     A = last_A
     B = last_B
-    m = m - 1
+    i = i - 1
     
     warning("Algorithm stopped because deviance increased.\nThis should not happen!
             Try rerunning with use_irlba = FALSE")
@@ -179,8 +179,8 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
   object = list(mu = mu,
                 A = A,
                 B = B,
-                iters = m,
-                loss_trace = loss_trace[1:(m+1)],
+                iters = i,
+                loss_trace = loss_trace[1:(i + 1)],
                 prop_deviance_expl = 1 - loglike / null_loglike)
   class(object) <- "lsvd"
   object
@@ -257,7 +257,7 @@ predict.lsvd <- function(object, newdata, quiet = TRUE, max_iters = 1000, conv_c
     
     loss_trace = numeric(max_iters)
     
-    for (m in 1:max_iters) {
+    for (i in 1:max_iters) {
       last_A = A
       
       theta = mu_mat + tcrossprod(A, B)
@@ -267,19 +267,19 @@ predict.lsvd <- function(object, newdata, quiet = TRUE, max_iters = 1000, conv_c
       A = Z %*% B
       
       loglike = sum(log(inv.logit.mat(q * (mu_mat + tcrossprod(A, B))))[q != 0])
-      loss_trace[m] = (-loglike) / sum(q != 0)
+      loss_trace[i] = (-loglike) / sum(q != 0)
       
       if (!quiet) 
-        cat(m," ",loss_trace[m], "\n")
+        cat(i," ",loss_trace[i], "\n")
       
-      if (m > 4) {
-        if ((loss_trace[m - 1] - loss_trace[m]) < conv_criteria)
+      if (i > 4) {
+        if ((loss_trace[i - 1] - loss_trace[i]) < conv_criteria)
           break
       }
     }
-    if (loss_trace[m - 1] < loss_trace[m]) {
+    if (loss_trace[i - 1] < loss_trace[i]) {
       A = last_A
-      m = m - 1
+      i = i - 1
       
       warning("Algorithm stopped because deviance increased.\nThis should not happen!")
     }

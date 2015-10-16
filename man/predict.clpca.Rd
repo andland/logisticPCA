@@ -36,7 +36,7 @@ mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 mat_new = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit_new)) * 1.0
 
 # run logistic PCA on it
-clpca = convexLogisticPCA(mat, k = 1, M = 4, main_effects = FALSE)
+clpca = convexLogisticPCA(mat, k = 1, m = 4, main_effects = FALSE)
 
 PCs = predict(clpca, mat_new)
 }

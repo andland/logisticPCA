@@ -4,28 +4,30 @@
 \alias{cv.lpca}
 \title{CV for logistic PCA}
 \usage{
-cv.lpca(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...)
+cv.lpca(x, ks, ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, Ms, ...)
 }
 \arguments{
 \item{x}{matrix with all binary entries}
 
 \item{ks}{the different dimensions \code{k} to try}
 
-\item{Ms}{the different approximations to the saturated model \code{M} to try}
+\item{ms}{the different approximations to the saturated model \code{m} to try}
 
 \item{folds}{if \code{folds} is a scalar, then it is the number of folds. If
 it is a vector, it should be the same length as the number of rows in \code{x}}
 
 \item{quiet}{logical; whether the function should display progress}
 
+\item{Ms}{depricated. Use \code{ms} instead}
+
 \item{...}{Additional arguments passed to \code{logisticPCA}}
 }
 \value{
 A matrix of the CV negative log likelihood with \code{k} in rows and
- \code{M} in columns
+ \code{m} in columns
 }
 \description{
-Run cross validation on dimension and \code{M} for logistic PCA
+Run cross validation on dimension and \code{m} for logistic PCA
 }
 \examples{
 # construct a low rank matrix in the logit scale
@@ -38,7 +40,7 @@ mat_logit = outer(rnorm(rows), rnorm(cols))
 mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 
 \dontrun{
-negloglikes = cv.lpca(mat, ks = 1:9, Ms = 3:6)
+negloglikes = cv.lpca(mat, ks = 1:9, ms = 3:6)
 plot(negloglikes)
 }
 }

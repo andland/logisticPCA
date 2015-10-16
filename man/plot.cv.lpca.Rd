@@ -25,7 +25,7 @@ mat_logit = outer(rnorm(rows), rnorm(cols))
 mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 
 \dontrun{
-negloglikes = cv.lpca(dat, ks = 1:9, Ms = 3:6)
+negloglikes = cv.lpca(dat, ks = 1:9, ms = 3:6)
 plot(negloglikes)
 }
 }

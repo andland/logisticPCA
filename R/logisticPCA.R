@@ -6,7 +6,7 @@
 #'
 #' @param x matrix with all binary entries
 #' @param k number of principal components to return
-#' @param M value to approximate the saturated model. If \code{M = 0}, M is solved for
+#' @param m value to approximate the saturated model. If \code{m = 0}, m is solved for
 #' @param quiet logical; whether the calculation should give feedback
 #' @param use_irlba logical; if \code{TRUE}, the function uses the irlba package
 #'   to more quickly calculate the eigen-decomposition
@@ -18,15 +18,16 @@
 #' @param start_U starting value for the orthogonal matrix
 #' @param start_mu starting value for mu. Only used if \code{main_effects = TRUE}
 #' @param main_effects logical; whether to include main effects in the model
-#' @param validation optional validation matrix. If supplied and \code{M = 0}, the
-#'   validation data is used to solve for \code{M}
+#' @param validation optional validation matrix. If supplied and \code{m = 0}, the
+#'   validation data is used to solve for \code{m}
+#' @param M depricated. Use \code{m} instead
 #'
 #' @return An S3 object of class \code{lpca} which is a list with the
 #' following components:
 #' \item{mu}{the main effects}
 #' \item{U}{a \code{k}-dimentional orthonormal matrix with the loadings}
 #' \item{PCs}{the princial component scores}
-#' \item{M}{the parameter inputed or solved for}
+#' \item{m}{the parameter inputed or solved for}
 #' \item{iters}{number of iterations required for convergence}
 #' \item{loss_trace}{the trace of the average negative log likelihood of the algorithm.
 #'    Should be non-increasing}
@@ -45,24 +46,29 @@
 #' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 #'
 #' # run logistic PCA on it
-#' lpca = logisticPCA(mat, k = 1, M = 4, main_effects = FALSE)
+#' lpca = logisticPCA(mat, k = 1, m = 4, main_effects = FALSE)
 #'
 #' # Logistic PCA likely does a better job finding latent features
 #' # than standard PCA
 #' plot(svd(mat_logit)$u[, 1], lpca$PCs[, 1])
 #' plot(svd(mat_logit)$u[, 1], svd(mat)$u[, 1])
 #' @export
-logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
+logisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, use_irlba = FALSE,
                         max_iters = 1000, conv_criteria = 1e-5, random_start = FALSE,
-                        start_U, start_mu, main_effects = TRUE, validation) {
+                        start_U, start_mu, main_effects = TRUE, validation, M) {
+  if (!missing(M)) {
+    m = M
+    warning("M is depricated. Use m instead. ",
+            "Using m = ", m)
+  }
   use_irlba = use_irlba && requireNamespace("irlba", quietly = TRUE)
   q = as.matrix(2 * x - 1)
   missing_mat = is.na(q)
   q[is.na(q)] <- 0 # forces Z to be equal to theta when data is missing
   n = nrow(q)
   d = ncol(q)
-  if (M == 0) {
-    M = 4
+  if (m == 0) {
+    m = 4
     solve_M = TRUE
     if (!missing(validation)) {
       if (ncol(validation) != ncol(x)) {
@@ -80,7 +86,7 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     if (!missing(start_mu)) {
       mu = start_mu
     } else {
-      mu = colMeans(M * q)
+      mu = colMeans(m * q)
     }
   } else {
     mu = rep(0, d)
@@ -106,7 +112,7 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   qTq = crossprod(q)
 
   loss_trace = numeric(max_iters + 1)
-  eta = M * q + missing_mat * outer(rep(1, n), mu)
+  eta = m * q + missing_mat * outer(rep(1, n), mu)
   theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% tcrossprod(U)
   loglike <- log_like_Bernoulli(q = q, theta = theta)
   loss_trace[1] = (-loglike) / sum(q!=0)
@@ -117,9 +123,9 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     cat("0 hours elapsed\n")
   }
 
-  for (m in 1:max_iters) {
+  for (i in 1:max_iters) {
     last_U = U
-    last_M = M
+    last_m = m
     last_mu = mu
 
     if (solve_M) {
@@ -128,15 +134,15 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
         M_slope = sum(((Phat - x) * (q %*% tcrossprod(U)))[q != 0])
         M_curve = sum((Phat * (1 - Phat) * (q %*% tcrossprod(U))^2)[q != 0])
       } else {
-        lpca_obj = structure(list(mu = mu, U = U, M = M),
+        lpca_obj = structure(list(mu = mu, U = U, m = m),
                              class = "lpca")
         Phat = predict(lpca_obj, newdata = validation, type = "response")
         M_slope = sum(((Phat - validation) * (q_val %*% tcrossprod(U)))[q_val != 0])
         M_curve = sum((Phat * (1 - Phat) * (q_val %*% tcrossprod(U))^2)[q_val != 0])
       }
-      M = max(M - M_slope / M_curve, 0)
+      m = max(m - M_slope / M_curve, 0)
 
-      eta = M * q + missing_mat * outer(rep(1, n), mu)
+      eta = m * q + missing_mat * outer(rep(1, n), mu)
       theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% tcrossprod(U)
     }
 
@@ -145,7 +151,7 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
       mu = as.numeric(colMeans(Z - eta %*% tcrossprod(U)))
     }
 
-    eta = M * q + missing_mat * outer(rep(1, n), mu)
+    eta = m * q + missing_mat * outer(rep(1, n), mu)
 
     mat_temp = crossprod(scale(eta, center = mu, scale = FALSE), Z)
     mat_temp = mat_temp + t(mat_temp) - crossprod(eta) + n * outer(mu, mu)
@@ -173,23 +179,23 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
       }
     }
 
-    loss_trace[m + 1] = (-loglike) / sum(q!=0)
+    loss_trace[i + 1] = (-loglike) / sum(q!=0)
 
     if (!quiet) {
       time_elapsed = as.numeric(proc.time() - ptm)[3]
-      tot_time = max_iters / m * time_elapsed
+      tot_time = max_iters / i * time_elapsed
       time_remain = tot_time - time_elapsed
-      cat(m, "  ", loss_trace[m + 1], "")
+      cat(i, "  ", loss_trace[i + 1], "")
       cat(round(time_elapsed / 3600, 1), "hours elapsed. Max", round(time_remain / 3600, 1), "hours remain.\n")
     }
-    if (m > 4) {
-      # when solving for M, the monoticity does not apply
+    if (i > 4) {
+      # when solving for m, the monoticity does not apply
       if (solve_M) {
-        if (abs(loss_trace[m] - loss_trace[m+1]) < conv_criteria) {
+        if (abs(loss_trace[i] - loss_trace[i + 1]) < conv_criteria) {
           break
         }
       } else {
-        if ((loss_trace[m] - loss_trace[m+1]) < conv_criteria) {
+        if ((loss_trace[i] - loss_trace[i + 1]) < conv_criteria) {
           break
         }
       }
@@ -197,11 +203,11 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
   }
 
   # test if loss function increases
-  if ((loss_trace[m + 1] - loss_trace[m]) > (1e-10)) {
+  if ((loss_trace[i + 1] - loss_trace[i]) > (1e-10)) {
     U = last_U
     mu = last_mu
-    M = last_M
-    m = m - 1
+    m = last_m
+    i = i - 1
 
     if (!solve_M) {
       warning("Algorithm stopped because deviance increased.\nThis should not happen!")
@@ -218,14 +224,15 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
     (1 - null_proportions) * log(1 - null_proportions)
   null_loglike = sum((null_loglikes * colSums(q!=0))[!(null_proportions %in% c(0, 1))])
 
-  eta = M * q + missing_mat * outer(rep(1, n), mu)
+  eta = m * q + missing_mat * outer(rep(1, n), mu)
 
   object <- list(mu = mu,
                  U = U,
                  PCs = scale(eta, center = mu, scale = FALSE) %*% U,
-                 M = M,
-                 iters = m,
-                 loss_trace = loss_trace[1:(m + 1)],
+                 m = m,
+                 M = m, # need to depricate after 0.1.1
+                 iters = i,
+                 loss_trace = loss_trace[1:(i + 1)],
                  prop_deviance_expl = 1 - loglike / null_loglike)
   class(object) <- "lpca"
   object
@@ -255,7 +262,7 @@ logisticPCA <- function(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
 #' mat_new = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit_new)) * 1.0
 #'
 #' # run logistic PCA on it
-#' lpca = logisticPCA(mat, k = 1, M = 4, main_effects = FALSE)
+#' lpca = logisticPCA(mat, k = 1, m = 4, main_effects = FALSE)
 #'
 #' PCs = predict(lpca, mat_new)
 #' @export
@@ -267,7 +274,7 @@ predict.lpca <- function(object, newdata, type = c("PCs", "link", "response"), .
   } else {
     q = as.matrix(newdata) * 2 - 1
     q[is.na(q)] <- 0
-    eta = object$M * q + is.na(q) * outer(rep(1, nrow(newdata)), object$mu)
+    eta = object$m * q + is.na(q) * outer(rep(1, nrow(newdata)), object$mu)
     PCs = scale(eta, center = object$mu, scale = FALSE) %*% object$U
   }
 
@@ -299,7 +306,7 @@ predict.lpca <- function(object, newdata, type = c("PCs", "link", "response"), .
 #' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 #'
 #' # run logistic PCA on it
-#' lpca = logisticPCA(mat, k = 1, M = 4, main_effects = FALSE)
+#' lpca = logisticPCA(mat, k = 1, m = 4, main_effects = FALSE)
 #'
 #' # construct fitted probability matrix
 #' fit = fitted(lpca, type = "response")
@@ -338,7 +345,7 @@ fitted.lpca <- function(object, type = c("link", "response"), ...) {
 #' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 #'
 #' # run logistic PCA on it
-#' lpca = logisticPCA(mat, k = 2, M = 4, main_effects = FALSE)
+#' lpca = logisticPCA(mat, k = 2, m = 4, main_effects = FALSE)
 #'
 #' \dontrun{
 #' plot(lpca)
@@ -381,7 +388,7 @@ plot.lpca <- function(x, type = c("trace", "loadings", "scores"), ...) {
 print.lpca <- function(x, ...) {
   cat(nrow(x$PCs), "rows and ")
   cat(nrow(x$U), "columns\n")
-  cat("Rank", ncol(x$U), "solution with M =", x$M, "\n")
+  cat("Rank", ncol(x$U), "solution with m =", x$m, "\n")
   cat("\n")
   cat(round(x$prop_deviance_expl * 100, 1), "% of deviance explained\n", sep = "")
   cat(x$iters, "iterations to converge\n")
@@ -392,18 +399,19 @@ print.lpca <- function(x, ...) {
 #' @title CV for logistic PCA
 #'
 #' @description
-#' Run cross validation on dimension and \code{M} for logistic PCA
+#' Run cross validation on dimension and \code{m} for logistic PCA
 #'
 #' @param x matrix with all binary entries
 #' @param ks the different dimensions \code{k} to try
-#' @param Ms the different approximations to the saturated model \code{M} to try
+#' @param ms the different approximations to the saturated model \code{m} to try
 #' @param folds if \code{folds} is a scalar, then it is the number of folds. If
 #'  it is a vector, it should be the same length as the number of rows in \code{x}
 #' @param quiet logical; whether the function should display progress
+#' @param Ms depricated. Use \code{ms} instead
 #' @param ... Additional arguments passed to \code{logisticPCA}
 #'
 #' @return A matrix of the CV negative log likelihood with \code{k} in rows and
-#'  \code{M} in columns
+#'  \code{m} in columns
 #'
 #' @examples
 #' # construct a low rank matrix in the logit scale
@@ -416,11 +424,16 @@ print.lpca <- function(x, ...) {
 #' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 #'
 #' \dontrun{
-#' negloglikes = cv.lpca(mat, ks = 1:9, Ms = 3:6)
+#' negloglikes = cv.lpca(mat, ks = 1:9, ms = 3:6)
 #' plot(negloglikes)
 #' }
 #' @export
-cv.lpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...) {
+cv.lpca <- function(x, ks, ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, Ms, ...) {
+  if (!missing(Ms)) {
+    ms = Ms
+    warning("Ms is depricated. Use ms instead.\n", 
+            "Using ms in ", paste(ms, collapse = ","))
+  }
   q = 2 * as.matrix(x) - 1
   q[is.na(q)] <- 0
 
@@ -437,33 +450,33 @@ cv.lpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...
     cv = sample(1:folds, nrow(q), replace = TRUE)
   }
 
-  log_likes = matrix(0, length(ks), length(Ms),
-                     dimnames = list(k = ks, M = Ms))
+  log_likes = matrix(0, length(ks), length(ms),
+                     dimnames = list(k = ks, m = ms))
   for (k in ks) {
-    for (M in Ms) {
+    for (m in ms) {
       if (!quiet) {
-        cat("k =", k, "M =", M, "")
+        cat("k =", k, "m =", m, "")
       }
       for (c in unique(cv)) {
         if (!quiet) {
           cat(".")
         }
-        lpca = logisticPCA(x[c != cv, ], k = k, M = M, ...)
+        lpca = logisticPCA(x[c != cv, ], k = k, m = m, ...)
         pred_theta = predict(lpca, newdat = x[c == cv, ], type = "link")
-        log_likes[k == ks, M == Ms] = log_likes[k == ks, M == Ms] +
+        log_likes[k == ks, m == ms] = log_likes[k == ks, m == ms] +
           log_like_Bernoulli(q = q[c == cv, ], theta = pred_theta)
-        #         log_likes[k == ks, M == Ms] = log_likes[k == ks, M == Ms] +
+        #         log_likes[k == ks, m == ms] = log_likes[k == ks, m == ms] +
         #           sum(log(inv.logit.mat(q[c == cv, ] * pred_theta)))
       }
       if (!quiet) {
-        cat("", -log_likes[k == ks, M == Ms], "\n")
+        cat("", -log_likes[k == ks, m == ms], "\n")
       }
     }
   }
   class(log_likes) <- c("matrix", "cv.lpca")
   which_min = which(log_likes == max(log_likes), arr.ind = TRUE)
   if (!quiet) {
-    cat("Best: k =", ks[which_min[1]], "M =", Ms[which_min[2]], "\n")
+    cat("Best: k =", ks[which_min[1]], "m =", ms[which_min[2]], "\n")
   }
 
   return(-log_likes)
@@ -488,25 +501,25 @@ cv.lpca <- function(x, ks, Ms = seq(2, 10, by = 2), folds = 5, quiet = TRUE, ...
 #' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 #'
 #' \dontrun{
-#' negloglikes = cv.lpca(dat, ks = 1:9, Ms = 3:6)
+#' negloglikes = cv.lpca(dat, ks = 1:9, ms = 3:6)
 #' plot(negloglikes)
 #' }
 #' @export
 plot.cv.lpca <- function(x, ...) {
   # replaces reshape2::melt(-x, value.name = "NegLogLikelihood")
-  Ms = type.convert(colnames(x))
+  ms = type.convert(colnames(x))
   ks = type.convert(rownames(x))
-  df = data.frame(k = rep(ks, times = length(Ms)),
-                  M = rep(Ms, each = length(ks)),
+  df = data.frame(k = rep(ks, times = length(ms)),
+                  m = rep(ms, each = length(ks)),
                   NegLogLikelihood = as.vector(x))
   
   if (ncol(x) == 1) {
-    df$M = factor(df$M)
-    p <- ggplot2::ggplot(df, ggplot2::aes_string("k", "NegLogLikelihood", colour = "M")) +
+    df$m = factor(df$m)
+    p <- ggplot2::ggplot(df, ggplot2::aes_string("k", "NegLogLikelihood", colour = "m")) +
       ggplot2::geom_line()
   } else {
     df$k = factor(df$k)
-    p <- ggplot2::ggplot(df, ggplot2::aes_string("M", "NegLogLikelihood", colour = "k")) +
+    p <- ggplot2::ggplot(df, ggplot2::aes_string("m", "NegLogLikelihood", colour = "k")) +
       ggplot2::geom_line()
   }
   return(p)

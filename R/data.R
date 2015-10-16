@@ -26,5 +26,5 @@
 #' 
 #' @examples
 #' data(house_votes84)
-#' congress_lpca = logisticPCA(house_votes84, k = 2, M = 4)
+#' congress_lpca = logisticPCA(house_votes84, k = 2, m = 4)
 "house_votes84"

@@ -80,7 +80,7 @@ data("house_votes84")
 
 The three formulations described above are implemented in the functions `logisticSVD`, `logisticPCA`, and `convexLogisticPCA`. They return S3 objects of classes `lsvd`, `lpca`, and `clpca` respectively. `logisticSVD` returns `mu`, `A`, and `B`, `logisticPCA` returns `mu` and `U`, and `convexLogisticPCA` returns `mu` and `H`, the $d \times d$ Fantope matrix. All of them take a binary data matrix as the first argument (which can include missing data) and the rank of the approximation `k` as the second argument. 
 
-Additionally, for `logisticPCA` and `convexLogisticPCA`, it is necessary to specify `M`, which is used to approximate the natural parameters from saturated model. Larger values of `M` give fitted probabilities closer to 0 or 1, and smaller values give fitter probabilities closer to 0.5. The functions `cv.lpca` and `cv.clpca` perform row-wise cross-validation to help select `M`.
+Additionally, for `logisticPCA` and `convexLogisticPCA`, it is necessary to specify `m`, which is used to approximate the natural parameters from saturated model. Larger values of `m` give fitted probabilities closer to 0 or 1, and smaller values give fitter probabilities closer to 0.5. The functions `cv.lpca` and `cv.clpca` perform row-wise cross-validation to help select `m`.
 
 This information is summarized in the table below. The returned objects that are in parentheses are derived from other parameters.
 
@@ -92,7 +92,7 @@ df = data.frame(
   Returns = c("`mu`, `A`, `B`", "`mu`, `U`, (`PCs`)", "`mu`, `H`, (`U`, `PCs`)"),
   Specify_M = c("No", "Yes", "Yes")
 )
-knitr::kable(df, col.names = c("Formulation", "Function", "Class", "Returns", "Specify M?"))
+knitr::kable(df, col.names = c("Formulation", "Function", "Class", "Returns", "Specify m?"))
 ```
 
 ### Printing and Plotting
@@ -107,16 +107,16 @@ For this an the other formulations, printing gives a summary of the fit.
 logsvd_model
 ```
 
-For logistic PCA, we want to first decide which `M` to use with cross validation. We are assuming `k = 2` and trying different `M`s from 1 to 10.
+For logistic PCA, we want to first decide which `m` to use with cross validation. We are assuming `k = 2` and trying different `m`s from 1 to 10.
 ```{r cvlpca}
-logpca_cv = cv.lpca(house_votes84, ks = 2, Ms = 1:10)
+logpca_cv = cv.lpca(house_votes84, ks = 2, ms = 1:10)
 plot(logpca_cv)
 ```
 
-It looks like the optimal `M` is `r which.min(logpca_cv)`, which we can use to fit with all the data. We will also use the same `M` for the convex formulation.
+It looks like the optimal `m` is `r which.min(logpca_cv)`, which we can use to fit with all the data. We will also use the same `m` for the convex formulation.
 ```{r lpca}
-logpca_model = logisticPCA(house_votes84, k = 2, M = which.min(logpca_cv))
-clogpca_model = convexLogisticPCA(house_votes84, k = 2, M = which.min(logpca_cv))
+logpca_model = logisticPCA(house_votes84, k = 2, m = which.min(logpca_cv))
+clogpca_model = convexLogisticPCA(house_votes84, k = 2, m = which.min(logpca_cv))
 ```
 
 Each of the formulations has a plot method to make it easier to see the results of the fit and assess convergence. There are three options for the `type` of plot. The first is `type = "trace"`, which plots the deviance as a function of iteration. For logistic PCA and logistic SVD, the deviance should decrease at each iteration, but not necessarily for convex logistic PCA. For example, convex logistic PCA converged in `r length(clogpca_model$loss_trace) - 1` iterations.

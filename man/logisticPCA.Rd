@@ -4,16 +4,16 @@
 \alias{logisticPCA}
 \title{Logistic Principal Component Analysis}
 \usage{
-logisticPCA(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
+logisticPCA(x, k = 2, m = 4, quiet = TRUE, use_irlba = FALSE,
   max_iters = 1000, conv_criteria = 1e-05, random_start = FALSE, start_U,
-  start_mu, main_effects = TRUE, validation)
+  start_mu, main_effects = TRUE, validation, M)
 }
 \arguments{
 \item{x}{matrix with all binary entries}
 
 \item{k}{number of principal components to return}
 
-\item{M}{value to approximate the saturated model. If \code{M = 0}, M is solved for}
+\item{m}{value to approximate the saturated model. If \code{m = 0}, m is solved for}
 
 \item{quiet}{logical; whether the calculation should give feedback}
 
@@ -34,8 +34,10 @@ function will use an eigen-decomposition as starting value}
 
 \item{main_effects}{logical; whether to include main effects in the model}
 
-\item{validation}{optional validation matrix. If supplied and \code{M = 0}, the
-  validation data is used to solve for \code{M}}
+\item{validation}{optional validation matrix. If supplied and \code{m = 0}, the
+validation data is used to solve for \code{m}}
+
+\item{M}{depricated. Use \code{m} instead}
 }
 \value{
 An S3 object of class \code{lpca} which is a list with the
@@ -43,7 +45,7 @@ following components:
 \item{mu}{the main effects}
 \item{U}{a \code{k}-dimentional orthonormal matrix with the loadings}
 \item{PCs}{the princial component scores}
-\item{M}{the parameter inputed or solved for}
+\item{m}{the parameter inputed or solved for}
 \item{iters}{number of iterations required for convergence}
 \item{loss_trace}{the trace of the average negative log likelihood of the algorithm.
    Should be non-increasing}
@@ -66,7 +68,7 @@ mat_logit = outer(rnorm(rows), rnorm(cols))
 mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 
 # run logistic PCA on it
-lpca = logisticPCA(mat, k = 1, M = 4, main_effects = FALSE)
+lpca = logisticPCA(mat, k = 1, m = 4, main_effects = FALSE)
 
 # Logistic PCA likely does a better job finding latent features
 # than standard PCA

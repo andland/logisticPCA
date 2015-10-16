@@ -12,9 +12,9 @@ mat_missing = matrix(runif(rows * cols) <= prop_missing, rows, cols)
 mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 is.na(mat[mat_missing]) <- TRUE
 
-lpca = logisticPCA(mat, k = k, M = 4, main_effects = FALSE)
+lpca = logisticPCA(mat, k = k, m = 4, main_effects = FALSE)
 lsvd = logisticSVD(mat, k = k, main_effects = FALSE, conv_criteria = 1e-4, use_irlba = FALSE)
-clpca = convexLogisticPCA(mat, M = 4, k = k, main_effects = FALSE)
+clpca = convexLogisticPCA(mat, m = 4, k = k, main_effects = FALSE)
 
 pred1 = predict(lpca, mat)
 pred1l = predict(lpca, mat, type = "link")
@@ -94,9 +94,9 @@ rm(lsvd, lpca, clpca, pred1, pred1l, pred1r, pred2, pred2l, pred2r,
    pred3, pred3l, pred3r, fit1l, fit1r, fit2l, fit2r)
 
 k = 2
-lpca = logisticPCA(mat, M = 4, k = k, main_effects = FALSE)
+lpca = logisticPCA(mat, m = 4, k = k, main_effects = FALSE)
 lsvd = logisticSVD(mat, k = k, main_effects = FALSE, conv_criteria = 1e-4, use_irlba = FALSE)
-clpca = convexLogisticPCA(mat, M = 4, k = k, main_effects = FALSE)
+clpca = convexLogisticPCA(mat, m = 4, k = k, main_effects = FALSE)
 
 pred1 = predict(lpca, mat)
 pred1l = predict(lpca, mat, type = "link")

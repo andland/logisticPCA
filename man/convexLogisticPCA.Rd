@@ -4,16 +4,16 @@
 \alias{convexLogisticPCA}
 \title{Convex Logistic Principal Component Analysis}
 \usage{
-convexLogisticPCA(x, k = 2, M = 4, quiet = TRUE, use_irlba = FALSE,
+convexLogisticPCA(x, k = 2, m = 4, quiet = TRUE, use_irlba = FALSE,
   max_iters = 1000, conv_criteria = 1e-06, random_start = FALSE, start_H,
-  mu, main_effects = TRUE, ss_factor = 4, weights)
+  mu, main_effects = TRUE, ss_factor = 4, weights, M)
 }
 \arguments{
 \item{x}{matrix with all binary entries}
 
 \item{k}{number of principal components to return}
 
-\item{M}{value to approximate the saturated model}
+\item{m}{value to approximate the saturated model}
 
 \item{quiet}{logical; whether the calculation should give feedback}
 
@@ -40,6 +40,8 @@ sometimes work better. The default is \code{ss_factor = 4}.
 If it is not converging, try \code{ss_factor = 1}.}
 
 \item{weights}{an optional matrix of the same size as the \code{x} with non-negative weights}
+
+\item{M}{depricated. Use \code{m} instead}
 }
 \value{
 An S3 object of class \code{clpca} which is a list with the
@@ -48,7 +50,7 @@ following components:
 \item{H}{a rank \code{k} Fantope matrix}
 \item{U}{a \code{ceiling(k)}-dimentional orthonormal matrix with the loadings}
 \item{PCs}{the princial component scores}
-\item{M}{the parameter inputed}
+\item{m}{the parameter inputed}
 \item{iters}{number of iterations required for convergence}
 \item{loss_trace}{the trace of the average negative log likelihood using the Fantope matrix}
 \item{proj_loss_trace}{the trace of the average negative log likelihood using the projection matrix}
@@ -72,6 +74,6 @@ mat_logit = outer(rnorm(rows), rnorm(cols))
 mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 
 # run convex logistic PCA on it
-clpca = convexLogisticPCA(mat, k = 1, M = 4)
+clpca = convexLogisticPCA(mat, k = 1, m = 4)
 }
 

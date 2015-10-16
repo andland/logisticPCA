@@ -24,7 +24,7 @@ install_github("andland/logisticPCA")
 Three types of dimensionality reduction are given. For all the functions, the user must supply the desired dimension `k`. The data must be an `n x d` matrix comprised of binary variables (i.e. all `0`'s and `1`'s).
 
 ### Logistic PCA
-`logisticPCA()` estimates the natural parameters of a Bernoulli distribution in a lower dimensional space. This is done by projecting the natural parameters from the saturated model. A rank-`k` projection matrix, or equivalently a `d x k` orthogonal matrix `U`, is solved for to minimize the Bernoulli deviance. Since the natural parameters from the saturated model are either negative or positive infinity, an additional tuning parameter `M` is needed to approximate them. You can use `cv.lpca()` to select `M` by cross validation. Typical values are in the range of `3` to `10`. 
+`logisticPCA()` estimates the natural parameters of a Bernoulli distribution in a lower dimensional space. This is done by projecting the natural parameters from the saturated model. A rank-`k` projection matrix, or equivalently a `d x k` orthogonal matrix `U`, is solved for to minimize the Bernoulli deviance. Since the natural parameters from the saturated model are either negative or positive infinity, an additional tuning parameter `m` is needed to approximate them. You can use `cv.lpca()` to select `m` by cross validation. Typical values are in the range of `3` to `10`. 
 
 `mu` is a main effects vector of length `d` and `U` is the `d x k` loadings matrix.
 
@@ -32,7 +32,7 @@ Three types of dimensionality reduction are given. For all the functions, the us
 `logisticSVD()` estimates the natural parameters by a matrix factorization. `mu` is a main effects vector of length `d`, `B` is the `d x k` loadings matrix, and `A` is the `n x k` principal component score matrix.
 
 ### Convex Logistic PCA
-`convexLogisticPCA()` relaxes the problem of solving for a projection matrix to solving for a matrix in the `k`-dimensional Fantope, which is the convex hull of rank-`k` projection matrices. This has the advantage that the global minimum can be obtained efficiently. The disadvantage is that the `k`-dimensional Fantope solution may have a rank much larger than `k`, which reduces interpretability. It is also necessary to specify `M` in this function.
+`convexLogisticPCA()` relaxes the problem of solving for a projection matrix to solving for a matrix in the `k`-dimensional Fantope, which is the convex hull of rank-`k` projection matrices. This has the advantage that the global minimum can be obtained efficiently. The disadvantage is that the `k`-dimensional Fantope solution may have a rank much larger than `k`, which reduces interpretability. It is also necessary to specify `m` in this function.
 
 `mu` is a main effects vector of length `d`, `H` is the `d x d` Fantope matrix, and `U` is the `d x k` loadings matrix, which are the first `k` eigenvectors of `H`.
 
@@ -46,5 +46,5 @@ Each of the classes has associated methods to make data analysis easier.
 
 In addition, there are functions for performing cross validation.
 
-* `cv.lpca()`, `cv.lsvd()`, `cv.clpca()`: Run cross validation over the rows of the matrix to assess the fit of `M` and/or `k`.
+* `cv.lpca()`, `cv.lsvd()`, `cv.clpca()`: Run cross validation over the rows of the matrix to assess the fit of `m` and/or `k`.
 * `plot.cv()`: Plots the results of the `cv()` method.
