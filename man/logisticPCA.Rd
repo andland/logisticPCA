@@ -18,7 +18,8 @@ logisticPCA(x, k = 2, m = 4, quiet = TRUE, use_irlba = FALSE,
 \item{quiet}{logical; whether the calculation should give feedback}
 
 \item{use_irlba}{logical; if \code{TRUE}, the function uses the irlba package
-to more quickly calculate the eigen-decomposition}
+to more quickly calculate the eigen-decomposition. This is usually faster when
+\code{ncol(x) > 100} and \code{k} is small}
 
 \item{max_iters}{number of maximum iterations}
 

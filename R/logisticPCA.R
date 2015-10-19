@@ -9,7 +9,8 @@
 #' @param m value to approximate the saturated model. If \code{m = 0}, m is solved for
 #' @param quiet logical; whether the calculation should give feedback
 #' @param use_irlba logical; if \code{TRUE}, the function uses the irlba package
-#'   to more quickly calculate the eigen-decomposition
+#'   to more quickly calculate the eigen-decomposition. This is usually faster when 
+#'   \code{ncol(x) > 100} and \code{k} is small
 #' @param max_iters number of maximum iterations
 #' @param conv_criteria convergence criteria. The difference between average deviance
 #'   in successive iterations
@@ -160,8 +161,13 @@ logisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, use_irlba = FALSE,
     # so I switch to standard eigen if it does
     repeat {
       if (use_irlba) {
-        udv = irlba::irlba(mat_temp, nu=k, nv=k, adjust=3)
-        U = matrix(udv$u[, 1:k], d, k)
+        if (packageVersion("irlba") < "2.0.0") {
+          udv = irlba::irlba(mat_temp, nu=k, nv=k)
+          U = matrix(udv$u[, 1:k], d, k)
+        } else {
+          eig = irlba::partial_eigen(mat_temp, n = k)
+          U = matrix(eig$vectors[, 1:k], d, k)
+        }
       } else {
         eig = eigen(mat_temp, symmetric=TRUE)
         U = matrix(eig$vectors[, 1:k], d, k)
@@ -175,7 +181,7 @@ logisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, use_irlba = FALSE,
         break
       } else {
         use_irlba = FALSE
-        if (!quiet) {cat("Quitting irlba!\n")}
+        warning("irlba::partial_eigen was too inaccurate. Switched to base::eigen")
       }
     }
 

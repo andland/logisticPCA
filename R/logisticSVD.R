@@ -9,7 +9,7 @@
 #' @param quiet logical; whether the calculation should give feedback
 #' @param use_irlba logical; if \code{TRUE}, the function uses the irlba package 
 #'   to more quickly calculate the SVD. When the number of columns is small, 
-#'   the approximation may be less accurate
+#'   the approximation may be less accurate and slower
 #' @param max_iters number of maximum iterations
 #' @param conv_criteria convergence criteria. The difference between average deviance
 #'   in successive iterations
@@ -161,8 +161,12 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
     B = last_B
     i = i - 1
     
-    warning("Algorithm stopped because deviance increased.\nThis should not happen!
+    if (use_irlba) {
+      warning("Algorithm stopped because deviance increased.\nThis should not happen!
             Try rerunning with use_irlba = FALSE")
+    } else {
+      warning("Algorithm stopped because deviance increased.\nThis should not happen!")
+    }
   }
   
   
