@@ -2,7 +2,9 @@
 
 [![Build Status](https://travis-ci.org/andland/logisticPCA.png?branch=master)](https://travis-ci.org/andland/logisticPCA) [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/logisticPCA)](http://cran.r-project.org/web/packages/logisticPCA)
 
-`logisticPCA` is an R package for dimensionality reduction of binary data. Please note that it is still in the very early stages of development and the conventions will possibly change in the future. A manuscript describing logistic PCA can be found [here](http://www.stat.osu.edu/~yklee/mss/tr890.pdf).
+`logisticPCA` is an R package for dimensionality reduction of binary data. Please note that it is still in the very early stages of development and the conventions will possibly change in the future. A manuscript describing logistic PCA can be found [here](http://arxiv.org/abs/1510.06112).
+
+<img src="http://i.imgur.com/zTQbGDv.png" alt="logisticPCA projection" style="width: 700px;"/>
 
 ## Installation
 

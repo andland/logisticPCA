@@ -7,7 +7,7 @@ citEntry(entry = "TechReport",
   institution  = "Department of Statistics, The Ohio State University",
   year         = "2015",
   number       = "890",
-  url          = "http://www.stat.osu.edu/~yklee/mss/tr890.pdf",
+  url          = "http://arxiv.org/abs/1510.06112",
 
   textVersion  =
   paste("Andrew J. Landgraf, Yoonkyung Lee (2015).",
@@ -15,5 +15,5 @@ citEntry(entry = "TechReport",
         "through the Projection of Natural Parameters.",
         "Technical Report 890, Department of Statistics,",
         "The Ohio State University.",
-        "URL http://www.stat.osu.edu/~yklee/mss/tr890.pdf")
+        "URL http://arxiv.org/abs/1510.06112")
 )
