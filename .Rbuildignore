@@ -5,3 +5,4 @@
 cleanup
 ^data-raw$
 ^NEWS\.md$
+^dev$

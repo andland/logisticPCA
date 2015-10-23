@@ -1,0 +1,122 @@
+---
+title: "Computational Comparisons"
+author: "Andrew J. Landgraf"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r init}
+library(logisticPCA)
+```
+
+```{r sim, warning=FALSE, cache=TRUE, message=FALSE}
+set.seed(1)
+
+reps = 5
+rows_loops = c(100, 500)
+cols_loops = c(10, 100, 250, 500, 1000)
+k_loops = c(1, 5, 9)
+
+results = array(NA, c(length(rows_loops),
+                      length(cols_loops),
+                      length(k_loops),
+                      2, reps, 2),
+                list(rows = rows_loops,
+                     cols = cols_loops,
+                     k = k_loops,
+                     Matrix_Type = c("Low-Rank", "Random"),
+                     Rep = 1:reps,
+                     irlba = c("no", "yes")))
+for (rows in rows_loops) {
+  for (cols in cols_loops) {
+    for (k in k_loops) {
+      message(rows," ", cols, " ", k)
+      for (r in 1:reps) {
+        for (i in 1:2) {
+          if (i == 1) {
+            mat_logit = outer(rnorm(rows), rnorm(cols))
+            mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
+          } else {
+            mat = matrix(sample(0:1, rows * cols, replace = TRUE), rows, cols)
+          }
+          
+          a = system.time({
+            lpca_no = logisticPCA(mat, k = k, m = 4, main_effects = FALSE, use_irlba = F)
+          })
+          b = system.time({
+            lpca_yes = logisticPCA(mat, k = k, m = 4, main_effects = FALSE, use_irlba = T)
+          })
+          results[rows == rows_loops,
+                  cols == cols_loops,
+                  k == k_loops,
+                  i, r, ] = c(a[3], b[3])
+        }
+      }
+    }
+  }
+}
+```
+
+## Plots with Time on Normal Scale
+
+```{r plot}
+# save(results, file = "computation_timing_test.RData")
+
+library(reshape2)
+library(ggplot2)
+
+# take the average over the replications and melt to a data frame
+results_m = melt(apply(results, c(1:4, 6), mean))
+max_time = max(results_m$value)
+
+ggplot(subset(results_m, Matrix_Type == "Low-Rank"), aes(cols, value, colour = irlba)) +
+  geom_point() + geom_line() + facet_grid(rows ~ k) + 
+  scale_x_log10() + scale_y_continuous(limits = c(NA, max_time)) + ggtitle("Low-Rank Matrix")
+
+ggplot(subset(results_m, Matrix_Type == "Random"), aes(cols, value, colour = irlba)) +
+  geom_point() + geom_line() + facet_grid(rows ~ k) + 
+  scale_x_log10() + scale_y_continuous(limits = c(NA, max_time)) + ggtitle("Random Matrix")
+```
+
+
+## Plots with Time on Log Scale
+
+```{r plot_log}
+
+# take the average over the replications and melt to a data frame
+results_m = melt(apply(results, c(1:4, 6), mean))
+max_time = max(results_m$value)
+
+ggplot(subset(results_m, Matrix_Type == "Low-Rank"), aes(cols, value, colour = irlba)) +
+  geom_point() + geom_line() + facet_grid(rows ~ k) + 
+  scale_x_log10() + scale_y_log10(limits = c(NA, max_time)) + ggtitle("Low-Rank Matrix")
+
+ggplot(subset(results_m, Matrix_Type == "Random"), aes(cols, value, colour = irlba)) +
+  geom_point() + geom_line() + facet_grid(rows ~ k) + 
+  scale_x_log10() + scale_y_log10(limits = c(NA, max_time)) + ggtitle("Random Matrix")
+```
+
+## Plots of the Ratio
+
+```{r plot_ratio}
+
+# take the average over the replications and melt to a data frame
+results_mean = apply(results, c(1:4, 6), mean)
+
+results_ratio = results_mean[, , , , 1] / results_mean[, , , , 2]
+results_m = melt(results_ratio, value.name = "SpeedUp")
+max_time = max(results_m$SpeedUp)
+
+# ggplot(subset(results_m, Matrix_Type == "Low-Rank"), aes(cols, SpeedUp)) +
+#   geom_point() + geom_line() + facet_grid(rows ~ k) + geom_hline(lty = 2, yintercept = 1) +
+#   scale_x_log10() + scale_y_log10(limits = c(NA, max_time)) + ggtitle("Low-Rank Matrix")
+# 
+# ggplot(subset(results_m, Matrix_Type == "Random"), aes(cols, SpeedUp)) +
+#   geom_point() + geom_line() + facet_grid(rows ~ k) + geom_hline(lty = 2, yintercept = 1) +
+#   scale_x_log10() + scale_y_log10(limits = c(NA, max_time)) + ggtitle("Random Matrix")
+
+ggplot(results_m, aes(cols, SpeedUp, colour = Matrix_Type)) +
+  geom_point() + geom_line() + facet_grid(rows ~ k) + geom_hline(lty = 2, yintercept = 1) +
+  scale_x_log10() + scale_y_log10(limits = c(NA, max_time)) + ggtitle("Random Matrix")
+```
+
