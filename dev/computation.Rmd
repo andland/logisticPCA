@@ -96,7 +96,7 @@ ggplot(subset(results_m, Matrix_Type == "Random"), aes(cols, value, colour = irl
   scale_x_log10() + scale_y_log10(limits = c(NA, max_time)) + ggtitle("Random Matrix")
 ```
 
-## Plots of the Ratio
+## Plot of the Ratio
 
 ```{r plot_ratio}
 
@@ -117,6 +117,6 @@ max_time = max(results_m$SpeedUp)
 
 ggplot(results_m, aes(cols, SpeedUp, colour = Matrix_Type)) +
   geom_point() + geom_line() + facet_grid(rows ~ k) + geom_hline(lty = 2, yintercept = 1) +
-  scale_x_log10() + scale_y_log10(limits = c(NA, max_time)) + ggtitle("Random Matrix")
+  scale_x_log10() + scale_y_log10(limits = c(NA, max_time))
 ```
 
