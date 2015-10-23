@@ -16,7 +16,7 @@ knitr::opts_chunk$set(fig.width=6, fig.height=5)
 `logisticPCA` is an R package for dimensionality reduction of binary data. Three methods are implemented:
 
 * Exponential family PCA ([Collins et al., 2001](http://machinelearning.wustl.edu/mlpapers/paper_files/nips02-AA27.pdf)) applied to Bernoulli data, using the algorithm of [de Leeuw, 2006](http://www.stat.columbia.edu/~gelman/stuff_for_blog/csda.pdf),
-* Logisitic PCA of [Landgraf and  Lee, 2015](http://www.stat.osu.edu/~yklee/mss/tr890.pdf),
+* Logisitic PCA of [Landgraf and  Lee, 2015](http://arxiv.org/abs/1510.06112),
 * The convex relaxation of logistic PCA (ibid).
 
 ## Methods Implemented
