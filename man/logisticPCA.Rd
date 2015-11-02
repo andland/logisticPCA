@@ -76,4 +76,8 @@ lpca = logisticPCA(mat, k = 1, m = 4, main_effects = FALSE)
 plot(svd(mat_logit)$u[, 1], lpca$PCs[, 1])
 plot(svd(mat_logit)$u[, 1], svd(mat)$u[, 1])
 }
+\references{
+Landgraf, A.J. & Lee, Y., 2015. Dimensionality reduction for binary data through
+the projection of natural parameters. arXiv preprint arXiv:1510.06112.
+}
 

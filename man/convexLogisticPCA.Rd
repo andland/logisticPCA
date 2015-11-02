@@ -76,4 +76,8 @@ mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 # run convex logistic PCA on it
 clpca = convexLogisticPCA(mat, k = 1, m = 4)
 }
+\references{
+Landgraf, A.J. & Lee, Y., 2015. Dimensionality reduction for binary data through
+the projection of natural parameters. arXiv preprint arXiv:1510.06112.
+}
 
