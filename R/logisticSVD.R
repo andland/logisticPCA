@@ -192,6 +192,8 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
 
 #' @title Predict Logistic SVD left singular values or reconstruction on new data
 #' 
+#' @description Predict Logistic SVD left singular values or reconstruction on new data
+#' 
 #' @param object logistic SVD object
 #' @param newdata matrix with all binary entries. If missing, will use the 
 #'  data that \code{object} was fit on

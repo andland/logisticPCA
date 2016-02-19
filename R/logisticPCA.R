@@ -247,6 +247,8 @@ logisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, use_irlba = FALSE,
 
 #' @title Predict Logistic PCA scores or reconstruction on new data
 #'
+#' @description Predict Logistic PCA scores or reconstruction on new data
+#' 
 #' @param object logistic PCA object
 #' @param newdata matrix with all binary entries. If missing, will use the
 #'  data that \code{object} was fit on

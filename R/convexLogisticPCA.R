@@ -248,6 +248,8 @@ project.Fantope <- function(x, k) {
 
 #' @title Predict Convex Logistic PCA scores or reconstruction on new data
 #'
+#' @description Predict Convex Logistic PCA scores or reconstruction on new data
+#' 
 #' @param object convex logistic PCA object
 #' @param newdata matrix with all binary entries. If missing, will use the
 #'  data that \code{object} was fit on
