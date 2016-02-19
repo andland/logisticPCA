@@ -40,6 +40,10 @@
 #'    If \code{main_effects = TRUE}, the null model is just the main effects, otherwise
 #'    the null model estimates 0 for all natural parameters.}
 #'
+#' @references 
+#' Landgraf, A.J. & Lee, Y., 2015. Dimensionality reduction for binary data through 
+#' the projection of natural parameters. arXiv preprint arXiv:1510.06112.
+#'
 #' @examples
 #' # construct a low rank matrix in the logit scale
 #' rows = 100
