@@ -54,7 +54,7 @@ mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 mat_new = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit_new)) * 1.0
 
 # run logistic PCA on it
-lsvd = logisticSVD(mat, k = 1, main_effects = FALSE, use_irlba = FALSE)
+lsvd = logisticSVD(mat, k = 1, main_effects = FALSE, partial_decomp = FALSE)
 
 A_new = predict(lsvd, mat_new)
 }

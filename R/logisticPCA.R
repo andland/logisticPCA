@@ -8,10 +8,10 @@
 #' @param k number of principal components to return
 #' @param m value to approximate the saturated model. If \code{m = 0}, m is solved for
 #' @param quiet logical; whether the calculation should give feedback
-#' @param use_irlba logical; if \code{TRUE}, the function uses the irlba package
-#'   to more quickly calculate the eigen-decomposition. This is usually faster when 
-#'   \code{ncol(x) > 100} and \code{k} is small
 #' @param max_iters number of maximum iterations
+#' @param partial_decomp logical; if \code{TRUE}, the function uses the rARPACK package
+#'   to more quickly calculate the eigen-decomposition. This is usually faster than standard
+#'   eigen-decomponsition when \code{ncol(x) > 100} and \code{k} is small
 #' @param conv_criteria convergence criteria. The difference between average deviance
 #'   in successive iterations
 #' @param random_start logical; whether to randomly inititalize the parameters. If \code{FALSE},
@@ -22,6 +22,7 @@
 #' @param validation optional validation matrix. If supplied and \code{m = 0}, the
 #'   validation data is used to solve for \code{m}
 #' @param M depricated. Use \code{m} instead
+#' @param use_irlba depricated. Use \code{partial_decomp} instead
 #'
 #' @return An S3 object of class \code{lpca} which is a list with the
 #' following components:
@@ -58,20 +59,38 @@
 #' plot(svd(mat_logit)$u[, 1], lpca$PCs[, 1])
 #' plot(svd(mat_logit)$u[, 1], svd(mat)$u[, 1])
 #' @export
-logisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, use_irlba = FALSE,
+logisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FALSE,
                         max_iters = 1000, conv_criteria = 1e-5, random_start = FALSE,
-                        start_U, start_mu, main_effects = TRUE, validation, M) {
+                        start_U, start_mu, main_effects = TRUE, validation, M, use_irlba) {
   if (!missing(M)) {
     m = M
     warning("M is depricated. Use m instead. ",
             "Using m = ", m)
   }
-  use_irlba = use_irlba && requireNamespace("irlba", quietly = TRUE)
+  if (!missing(use_irlba)) {
+    partial_decomp = use_irlba
+    warning("use_irlba is depricated. Use partial_decomp instead. ",
+            "Using partial_decomp = ", partial_decomp)
+  }
+  if (partial_decomp) {
+    if (!requireNamespace("rARPACK", quietly = TRUE)) {
+      message("rARPACK must be installed to use partial_decomp")
+      partial_decomp = FALSE
+    }
+  }
+  
   q = as.matrix(2 * x - 1)
   missing_mat = is.na(q)
   q[is.na(q)] <- 0 # forces Z to be equal to theta when data is missing
   n = nrow(q)
   d = ncol(q)
+  
+  if (k >= d & partial_decomp) {
+    message("k >= dimension. Setting partial_decomp = FALSE")
+    partial_decomp = FALSE
+    k = d
+  }
+  
   if (m == 0) {
     m = 4
     solve_M = TRUE
@@ -105,8 +124,8 @@ logisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, use_irlba = FALSE,
     U = matrix(rnorm(d * k), d, k)
     U = qr.Q(qr(U))
   } else {
-    if (use_irlba) {
-      udv = irlba::irlba(scale(q, center = main_effects, scale = FALSE), nu = k, nv = k)
+    if (partial_decomp) {
+      udv = rARPACK::svds(scale(q, center = main_effects, scale = FALSE), k = k)
     } else {
       udv = svd(scale(q, center = main_effects, scale = FALSE))
     }
@@ -161,31 +180,29 @@ logisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, use_irlba = FALSE,
     mat_temp = crossprod(scale(eta, center = mu, scale = FALSE), Z)
     mat_temp = mat_temp + t(mat_temp) - crossprod(eta) + n * outer(mu, mu)
 
-    # irlba sometimes gives poor estimates of e-vectors
+    # rARPACK could give poor estimates of e-vectors
     # so I switch to standard eigen if it does
     repeat {
-      if (use_irlba) {
-        if (packageVersion("irlba") < "2.0.0") {
-          udv = irlba::irlba(mat_temp, nu=k, nv=k)
-          U = matrix(udv$u[, 1:k], d, k)
-        } else {
-          eig = irlba::partial_eigen(mat_temp, n = k)
-          U = matrix(eig$vectors[, 1:k], d, k)
-        }
-      } else {
-        eig = eigen(mat_temp, symmetric=TRUE)
-        U = matrix(eig$vectors[, 1:k], d, k)
+      if (partial_decomp) {
+        eig = rARPACK::eigs_sym(mat_temp, k = min(k + 2, d))
       }
+      if (!partial_decomp || any(eig$values[1:k] < 0)) {
+        eig = eigen(mat_temp, symmetric = TRUE)
+        if (!quiet & partial_decomp) {
+          cat("rARPACK::eigs_sym returned negative values.\n")
+        }
+      }
+      U = matrix(eig$vectors[, 1:k], d, k)
 
       theta = outer(rep(1, n), mu) + scale(eta, center = mu, scale = FALSE) %*% tcrossprod(U)
       this_loglike <- log_like_Bernoulli(q = q, theta = theta)
 
-      if (!use_irlba | this_loglike>=loglike) {
+      if (!partial_decomp | this_loglike >= loglike) {
         loglike = this_loglike
         break
       } else {
-        use_irlba = FALSE
-        warning("irlba::partial_eigen was too inaccurate. Switched to base::eigen")
+        partial_decomp = FALSE
+        warning("rARPACK::eigs_sym was too inaccurate in iteration ", i , ". Switched to base::eigen")
       }
     }
 

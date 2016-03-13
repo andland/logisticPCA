@@ -6,7 +6,7 @@
 \usage{
 logisticSVD(x, k = 2, quiet = TRUE, max_iters = 1000,
   conv_criteria = 1e-05, random_start = FALSE, start_A, start_B, start_mu,
-  use_irlba = TRUE, main_effects = TRUE)
+  partial_decomp = TRUE, main_effects = TRUE, use_irlba)
 }
 \arguments{
 \item{x}{matrix with all binary entries}
@@ -29,11 +29,13 @@ algorithm will use an SVD as starting value}
 
 \item{start_mu}{starting value for mu. Only used if \code{main_effects = TRUE}}
 
-\item{use_irlba}{logical; if \code{TRUE}, the function uses the irlba package 
+\item{partial_decomp}{logical; if \code{TRUE}, the function uses the rARPACK package
 to more quickly calculate the SVD. When the number of columns is small, 
 the approximation may be less accurate and slower}
 
 \item{main_effects}{logical; whether to include main effects in the model}
+
+\item{use_irlba}{depricated. Use \code{partial_decomp} instead}
 }
 \value{
 An S3 object of class \code{lsvd} which is a list with the
@@ -63,7 +65,7 @@ mat_logit = outer(rnorm(rows), rnorm(cols))
 mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 
 # run logistic SVD on it
-lsvd = logisticSVD(mat, k = 1, main_effects = FALSE, use_irlba = FALSE)
+lsvd = logisticSVD(mat, k = 1, main_effects = FALSE, partial_decomp = FALSE)
 
 # Logistic SVD likely does a better job finding latent features
 # than standard SVD

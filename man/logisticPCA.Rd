@@ -4,9 +4,9 @@
 \alias{logisticPCA}
 \title{Logistic Principal Component Analysis}
 \usage{
-logisticPCA(x, k = 2, m = 4, quiet = TRUE, use_irlba = FALSE,
+logisticPCA(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FALSE,
   max_iters = 1000, conv_criteria = 1e-05, random_start = FALSE, start_U,
-  start_mu, main_effects = TRUE, validation, M)
+  start_mu, main_effects = TRUE, validation, M, use_irlba)
 }
 \arguments{
 \item{x}{matrix with all binary entries}
@@ -17,9 +17,9 @@ logisticPCA(x, k = 2, m = 4, quiet = TRUE, use_irlba = FALSE,
 
 \item{quiet}{logical; whether the calculation should give feedback}
 
-\item{use_irlba}{logical; if \code{TRUE}, the function uses the irlba package
-to more quickly calculate the eigen-decomposition. This is usually faster when 
-\code{ncol(x) > 100} and \code{k} is small}
+\item{partial_decomp}{logical; if \code{TRUE}, the function uses the rARPACK package
+to more quickly calculate the eigen-decomposition. This is usually faster than standard
+eigen-decomponsition when \code{ncol(x) > 100} and \code{k} is small}
 
 \item{max_iters}{number of maximum iterations}
 
@@ -39,6 +39,8 @@ function will use an eigen-decomposition as starting value}
 validation data is used to solve for \code{m}}
 
 \item{M}{depricated. Use \code{m} instead}
+
+\item{use_irlba}{depricated. Use \code{partial_decomp} instead}
 }
 \value{
 An S3 object of class \code{lpca} which is a list with the
@@ -77,7 +79,7 @@ plot(svd(mat_logit)$u[, 1], lpca$PCs[, 1])
 plot(svd(mat_logit)$u[, 1], svd(mat)$u[, 1])
 }
 \references{
-Landgraf, A.J. & Lee, Y., 2015. Dimensionality reduction for binary data through
+Landgraf, A.J. & Lee, Y., 2015. Dimensionality reduction for binary data through 
 the projection of natural parameters. arXiv preprint arXiv:1510.06112.
 }
 

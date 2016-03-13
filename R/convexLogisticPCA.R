@@ -9,8 +9,8 @@
 #' @param k number of principal components to return
 #' @param m value to approximate the saturated model
 #' @param quiet logical; whether the calculation should give feedback
-#' @param use_irlba logical; if \code{TRUE}, the function uses the irlba package
-#'   to more quickly calculate the eigen-decomposition
+#' @param partial_decomp logical; if \code{TRUE}, the function uses the rARPACK package
+#'   to quickly initialize \code{H} when \code{ncol(x)} is large and \code{k} is small 
 #' @param max_iters number of maximum iterations
 #' @param conv_criteria convergence criteria. The difference between average deviance
 #'   in successive iterations
@@ -57,7 +57,7 @@
 #' # run convex logistic PCA on it
 #' clpca = convexLogisticPCA(mat, k = 1, m = 4)
 #' @export
-convexLogisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, use_irlba = FALSE,
+convexLogisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FALSE,
                               max_iters = 1000, conv_criteria = 1e-6, random_start = FALSE,
                               start_H, mu, main_effects = TRUE, ss_factor = 4, weights, M) {
   if (!missing(M)) {
@@ -65,15 +65,25 @@ convexLogisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, use_irlba = FALSE,
     warning("M is depricated. Use m instead. ",
             "Using m = ", m)
   }
-  # if (any(is.na(x))) {
-  #   stop("This function currently can't deal with missing values")
-  # }
+  if (partial_decomp) {
+    if (!requireNamespace("rARPACK", quietly = TRUE)) {
+      message("rARPACK must be installed to use partial_decomp")
+      partial_decomp = FALSE
+    }
+  }
+  
   x = as.matrix(x)
   n = nrow(x)
   d = ncol(x)
   q = 2 * x - 1
   q[is.na(q)] <- 0
   eta = q * abs(m)
+  
+  if (k >= d & partial_decomp) {
+    message("k >= dimension. Setting partial_decomp = FALSE")
+    partial_decomp = FALSE
+    k = d
+  }
 
   if (missing(weights) || length(weights) == 1) {
     weights = 1.0
@@ -117,8 +127,8 @@ convexLogisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, use_irlba = FALSE,
     HU = project.Fantope(U %*% t(U), k)
     H = HU$H
   } else {
-    if (use_irlba) {
-      udv = irlba::irlba(scale(q, center = main_effects, scale = F), nu = k, nv = k)
+    if (partial_decomp) {
+      udv = rARPACK::svds(scale(q, center = main_effects, scale = F), k = k)
     } else {
       udv = svd(scale(q, center = main_effects, scale = F), nu = k, nv = k)
     }
@@ -235,11 +245,11 @@ project.Fantope <- function(x, k) {
   lower = vals[length(vals)] - k / length(vals)
   upper = max(vals)
   while(TRUE) {
-    theta = (lower+upper) / 2
+    theta = (lower + upper) / 2
     sum.eig.vals = sum(pmin(pmax(vals - theta, 0), 1))
-    if (abs(sum.eig.vals-k) < 1e-10) {
+    if (abs(sum.eig.vals - k) < 1e-10) {
       break
-    } else if (sum.eig.vals>k) {
+    } else if (sum.eig.vals > k) {
       lower = theta
     } else {
       upper = theta

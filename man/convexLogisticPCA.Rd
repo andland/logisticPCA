@@ -4,7 +4,7 @@
 \alias{convexLogisticPCA}
 \title{Convex Logistic Principal Component Analysis}
 \usage{
-convexLogisticPCA(x, k = 2, m = 4, quiet = TRUE, use_irlba = FALSE,
+convexLogisticPCA(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FALSE,
   max_iters = 1000, conv_criteria = 1e-06, random_start = FALSE, start_H,
   mu, main_effects = TRUE, ss_factor = 4, weights, M)
 }
@@ -17,8 +17,8 @@ convexLogisticPCA(x, k = 2, m = 4, quiet = TRUE, use_irlba = FALSE,
 
 \item{quiet}{logical; whether the calculation should give feedback}
 
-\item{use_irlba}{logical; if \code{TRUE}, the function uses the irlba package
-to more quickly calculate the eigen-decomposition}
+\item{partial_decomp}{logical; if \code{TRUE}, the function uses the rARPACK package
+to quickly initialize \code{H} when \code{ncol(x)} is large and \code{k} is small}
 
 \item{max_iters}{number of maximum iterations}
 
@@ -77,7 +77,7 @@ mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 clpca = convexLogisticPCA(mat, k = 1, m = 4)
 }
 \references{
-Landgraf, A.J. & Lee, Y., 2015. Dimensionality reduction for binary data through
+Landgraf, A.J. & Lee, Y., 2015. Dimensionality reduction for binary data through 
 the projection of natural parameters. arXiv preprint arXiv:1510.06112.
 }
 

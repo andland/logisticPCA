@@ -7,7 +7,7 @@
 #' @param x matrix with all binary entries
 #' @param k rank of the SVD
 #' @param quiet logical; whether the calculation should give feedback
-#' @param use_irlba logical; if \code{TRUE}, the function uses the irlba package 
+#' @param partial_decomp logical; if \code{TRUE}, the function uses the rARPACK package
 #'   to more quickly calculate the SVD. When the number of columns is small, 
 #'   the approximation may be less accurate and slower
 #' @param max_iters number of maximum iterations
@@ -19,6 +19,7 @@
 #' @param start_B starting value for the right singular vectors
 #' @param start_mu starting value for mu. Only used if \code{main_effects = TRUE}
 #' @param main_effects logical; whether to include main effects in the model
+#' @param use_irlba depricated. Use \code{partial_decomp} instead
 #' 
 #' @return An S3 object of class \code{lsvd} which is a list with the
 #' following components:
@@ -51,7 +52,7 @@
 #' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 #' 
 #' # run logistic SVD on it
-#' lsvd = logisticSVD(mat, k = 1, main_effects = FALSE, use_irlba = FALSE)
+#' lsvd = logisticSVD(mat, k = 1, main_effects = FALSE, partial_decomp = FALSE)
 #' 
 #' # Logistic SVD likely does a better job finding latent features
 #' # than standard SVD
@@ -60,13 +61,30 @@
 #' @export
 logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria = 1e-5,
                         random_start = FALSE, start_A, start_B, start_mu, 
-                        use_irlba = TRUE, main_effects = TRUE) {
+                        partial_decomp = TRUE, main_effects = TRUE, use_irlba) {
   # TODO: Add ALS option?
-  use_irlba = use_irlba && requireNamespace("irlba", quietly = TRUE)
+  if (!missing(use_irlba)) {
+    partial_decomp = use_irlba
+    warning("use_irlba is depricated. Use partial_decomp instead. ",
+            "Using partial_decomp = ", partial_decomp)
+  }
+  if (partial_decomp) {
+    if (!requireNamespace("rARPACK", quietly = TRUE)) {
+      message("rARPACK must be installed to use partial_decomp")
+      partial_decomp = FALSE
+    }
+  }
+  
   q = 2 * as.matrix(x) - 1
   q[is.na(q)] <- 0 # forces Z to be equal to theta when data is missing
   n = nrow(q)
   d = ncol(q)
+  
+  if (k >= d & partial_decomp) {
+    message("k >= dimension. Setting partial_decomp = FALSE")
+    partial_decomp = FALSE
+    k = d
+  }
   
   # Initialize #
   ##################
@@ -78,8 +96,8 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
     }
     if (missing(start_A) | missing(start_B)) {
       if (!quiet) {cat("Initializing SVD... ")}
-      if (use_irlba) {
-        udv = irlba::irlba(scale(4 * q, center = main_effects, scale = FALSE), nu = max(k, 2), nv = max(k, 2))
+      if (partial_decomp) {
+        udv = rARPACK::svds(scale(4 * q, center = main_effects, scale = FALSE), k = k)
       } else {
         udv = svd(scale(4 * q, center = main_effects, scale = FALSE))
       }
@@ -124,8 +142,8 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
       mu = as.numeric(colMeans(Z))
     }
     
-    if (use_irlba) {
-      udv = irlba::irlba(scale(Z, center = main_effects, scale = FALSE), nu = max(k, 2), nv = max(k, 2))
+    if (partial_decomp) {
+      udv = rARPACK::svds(scale(Z, center = main_effects, scale = FALSE), min(k + 1, d))
     } else {
       udv = svd(scale(Z, center = main_effects, scale = FALSE))
     }
@@ -161,9 +179,9 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
     B = last_B
     i = i - 1
     
-    if (use_irlba) {
+    if (partial_decomp) {
       warning("Algorithm stopped because deviance increased.\nThis should not happen!
-            Try rerunning with use_irlba = FALSE")
+            Try rerunning with partial_decomp = FALSE")
     } else {
       warning("Algorithm stopped because deviance increased.\nThis should not happen!")
     }
@@ -228,7 +246,7 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
 #' mat_new = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit_new)) * 1.0
 #' 
 #' # run logistic PCA on it
-#' lsvd = logisticSVD(mat, k = 1, main_effects = FALSE, use_irlba = FALSE)
+#' lsvd = logisticSVD(mat, k = 1, main_effects = FALSE, partial_decomp = FALSE)
 #' 
 #' A_new = predict(lsvd, mat_new)
 #' @export
@@ -319,7 +337,7 @@ predict.lsvd <- function(object, newdata, quiet = TRUE, max_iters = 1000, conv_c
 #' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 #' 
 #' # run logistic SVD on it
-#' lsvd = logisticSVD(mat, k = 1, main_effects = FALSE, use_irlba = FALSE)
+#' lsvd = logisticSVD(mat, k = 1, main_effects = FALSE, partial_decomp = FALSE)
 #' 
 #' # construct fitted probability matrix
 #' fit = fitted(lsvd, type = "response")
@@ -358,7 +376,7 @@ fitted.lsvd <- function(object, type = c("link", "response"), ...) {
 #' mat = (matrix(runif(rows * cols), rows, cols) <= inv.logit.mat(mat_logit)) * 1.0
 #' 
 #' # run logistic SVD on it
-#' lsvd = logisticSVD(mat, k = 2, main_effects = FALSE, use_irlba = FALSE)
+#' lsvd = logisticSVD(mat, k = 2, main_effects = FALSE, partial_decomp = FALSE)
 #' 
 #' \dontrun{
 #' plot(lsvd)

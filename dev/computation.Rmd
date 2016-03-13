@@ -26,7 +26,7 @@ results = array(NA, c(length(rows_loops),
                      k = k_loops,
                      Matrix_Type = c("Low-Rank", "Random"),
                      Rep = 1:reps,
-                     irlba = c("no", "yes")))
+                     partial = c("no", "yes")))
 for (rows in rows_loops) {
   for (cols in cols_loops) {
     for (k in k_loops) {
@@ -41,10 +41,10 @@ for (rows in rows_loops) {
           }
           
           a = system.time({
-            lpca_no = logisticPCA(mat, k = k, m = 4, main_effects = FALSE, use_irlba = F)
+            lpca_no = logisticPCA(mat, k = k, m = 4, main_effects = FALSE, partial_decomp = F)
           })
           b = system.time({
-            lpca_yes = logisticPCA(mat, k = k, m = 4, main_effects = FALSE, use_irlba = T)
+            lpca_yes = logisticPCA(mat, k = k, m = 4, main_effects = FALSE, partial_decomp = T)
           })
           results[rows == rows_loops,
                   cols == cols_loops,
@@ -69,11 +69,11 @@ library(ggplot2)
 results_m = melt(apply(results, c(1:4, 6), mean))
 max_time = max(results_m$value)
 
-ggplot(subset(results_m, Matrix_Type == "Low-Rank"), aes(cols, value, colour = irlba)) +
+ggplot(subset(results_m, Matrix_Type == "Low-Rank"), aes(cols, value, colour = partial)) +
   geom_point() + geom_line() + facet_grid(rows ~ k) + 
   scale_x_log10() + scale_y_continuous(limits = c(NA, max_time)) + ggtitle("Low-Rank Matrix")
 
-ggplot(subset(results_m, Matrix_Type == "Random"), aes(cols, value, colour = irlba)) +
+ggplot(subset(results_m, Matrix_Type == "Random"), aes(cols, value, colour = partial)) +
   geom_point() + geom_line() + facet_grid(rows ~ k) + 
   scale_x_log10() + scale_y_continuous(limits = c(NA, max_time)) + ggtitle("Random Matrix")
 ```
@@ -87,11 +87,11 @@ ggplot(subset(results_m, Matrix_Type == "Random"), aes(cols, value, colour = irl
 results_m = melt(apply(results, c(1:4, 6), mean))
 max_time = max(results_m$value)
 
-ggplot(subset(results_m, Matrix_Type == "Low-Rank"), aes(cols, value, colour = irlba)) +
+ggplot(subset(results_m, Matrix_Type == "Low-Rank"), aes(cols, value, colour = partial)) +
   geom_point() + geom_line() + facet_grid(rows ~ k) + 
   scale_x_log10() + scale_y_log10(limits = c(NA, max_time)) + ggtitle("Low-Rank Matrix")
 
-ggplot(subset(results_m, Matrix_Type == "Random"), aes(cols, value, colour = irlba)) +
+ggplot(subset(results_m, Matrix_Type == "Random"), aes(cols, value, colour = partial)) +
   geom_point() + geom_line() + facet_grid(rows ~ k) + 
   scale_x_log10() + scale_y_log10(limits = c(NA, max_time)) + ggtitle("Random Matrix")
 ```
@@ -106,14 +106,6 @@ results_mean = apply(results, c(1:4, 6), mean)
 results_ratio = results_mean[, , , , 1] / results_mean[, , , , 2]
 results_m = melt(results_ratio, value.name = "SpeedUp")
 max_time = max(results_m$SpeedUp)
-
-# ggplot(subset(results_m, Matrix_Type == "Low-Rank"), aes(cols, SpeedUp)) +
-#   geom_point() + geom_line() + facet_grid(rows ~ k) + geom_hline(lty = 2, yintercept = 1) +
-#   scale_x_log10() + scale_y_log10(limits = c(NA, max_time)) + ggtitle("Low-Rank Matrix")
-# 
-# ggplot(subset(results_m, Matrix_Type == "Random"), aes(cols, SpeedUp)) +
-#   geom_point() + geom_line() + facet_grid(rows ~ k) + geom_hline(lty = 2, yintercept = 1) +
-#   scale_x_log10() + scale_y_log10(limits = c(NA, max_time)) + ggtitle("Random Matrix")
 
 ggplot(results_m, aes(cols, SpeedUp, colour = Matrix_Type)) +
   geom_point() + geom_line() + facet_grid(rows ~ k) + geom_hline(lty = 2, yintercept = 1) +
