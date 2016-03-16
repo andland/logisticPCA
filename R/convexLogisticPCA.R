@@ -10,7 +10,8 @@
 #' @param m value to approximate the saturated model
 #' @param quiet logical; whether the calculation should give feedback
 #' @param partial_decomp logical; if \code{TRUE}, the function uses the rARPACK package
-#'   to quickly initialize \code{H} when \code{ncol(x)} is large and \code{k} is small 
+#'   to quickly initialize \code{H} and project onto the Fantope when \code{ncol(x)} 
+#'   is large and \code{k} is small
 #' @param max_iters number of maximum iterations
 #' @param conv_criteria convergence criteria. The difference between average deviance
 #'   in successive iterations
@@ -234,14 +235,24 @@ convexLogisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FA
 #'
 #' @param x a symmetric matrix
 #' @param k the rank of the Fantope desired
+#' @param partial_decomp logical; if \code{TRUE}, the function uses the rARPACK package
+#'   to quickly calculate the eigendecomposition when \code{ncol(x)} is large and \code{k} is small
 #'
 #' @return
 #' \item{H}{a rank \code{k} Fantope matrix}
 #' \item{U}{a \code{k}-dimentional orthonormal matrix with the first \code{k} eigenvectors of \code{H}}
+#' \item{rank}{the rank of the Fantope matrix \code{H}}
 #' @export
-project.Fantope <- function(x, k) {
-  eig = eigen(x, symmetric = TRUE)
+project.Fantope <- function(x, k, partial_decomp = FALSE) {
+  if (partial_decomp) {
+    eig = eigen(x, symmetric = TRUE, only.values = TRUE)
+  } else {
+    eig = eigen(x, symmetric = TRUE)
+  }
   vals = eig$values
+  if (sum(pmin(1, eig$values)) < k) {
+    warning("k is larger than the rank of x")
+  }
   lower = vals[length(vals)] - k / length(vals)
   upper = max(vals)
   while(TRUE) {
@@ -256,8 +267,27 @@ project.Fantope <- function(x, k) {
     }
   }
   vals = pmin(pmax(vals - theta, 0), 1)
-  return(list(H = eig$vectors %*% diag(vals) %*% t(eig$vectors),
-              U = matrix(eig$vectors[, 1:ceiling(k)], nrow(x), ceiling(k))))
+  num_vals = sum(vals > .Machine$double.eps * 10)
+  
+  if (partial_decomp & num_vals < d) {
+    # do a partial decomposition of between k and number of non-zero values (plus a buffer)
+    eig = rARPACK::eigs_sym(x, k = max(min(num_vals + 1, ncol(x)), ceiling(k)))
+  }
+  # if rARPACK gave a bad result or the number of non-zero e-vals = d
+  if (!partial_decomp || num_vals == d || any(eig$values[1:num_vals] < 0)) {
+    if (partial_decomp) {
+      eig = eigen(x, symmetric = TRUE)
+    }
+    H = eig$vectors %*% diag(vals) %*% t(eig$vectors)
+  } else {
+    H = eig$vectors[, 1:num_vals, drop = FALSE] %*% 
+      diag(vals[1:num_vals], num_vals, num_vals) %*% 
+      t(eig$vectors[, 1:num_vals, drop = FALSE])
+  }
+  
+  return(list(H = H,
+              U = matrix(eig$vectors[, 1:ceiling(k)], nrow(x), ceiling(k)),
+              rank = num_vals))
 }
 
 #' @title Predict Convex Logistic PCA scores or reconstruction on new data
