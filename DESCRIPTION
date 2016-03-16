@@ -1,7 +1,7 @@
 Package: logisticPCA
 Type: Package
 Title: Binary Dimensionality Reduction
-Version: 0.2
+Version: 0.2.9000
 Date: 2016-03-13
 NeedsCompilation: yes
 ByteCompile: yes
