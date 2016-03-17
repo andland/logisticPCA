@@ -4,16 +4,20 @@
 \alias{project.Fantope}
 \title{Project onto the Fantope}
 \usage{
-project.Fantope(x, k)
+project.Fantope(x, k, partial_decomp = FALSE)
 }
 \arguments{
 \item{x}{a symmetric matrix}
 
 \item{k}{the rank of the Fantope desired}
+
+\item{partial_decomp}{logical; if \code{TRUE}, the function uses the rARPACK package
+to quickly calculate the eigendecomposition when \code{ncol(x)} is large and \code{k} is small}
 }
 \value{
 \item{H}{a rank \code{k} Fantope matrix}
 \item{U}{a \code{k}-dimentional orthonormal matrix with the first \code{k} eigenvectors of \code{H}}
+\item{rank}{the rank of the Fantope matrix \code{H}}
 }
 \description{
 Project a symmetric matrix onto the convex set of the rank k Fantope

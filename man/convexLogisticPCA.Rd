@@ -18,7 +18,8 @@ convexLogisticPCA(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FALSE,
 \item{quiet}{logical; whether the calculation should give feedback}
 
 \item{partial_decomp}{logical; if \code{TRUE}, the function uses the rARPACK package
-to quickly initialize \code{H} when \code{ncol(x)} is large and \code{k} is small}
+to quickly initialize \code{H} and project onto the Fantope when \code{ncol(x)} 
+is large and \code{k} is small}
 
 \item{max_iters}{number of maximum iterations}
 
@@ -57,6 +58,7 @@ following components:
 \item{prop_deviance_expl}{the proportion of deviance explained by this model.
    If \code{main_effects = TRUE}, the null model is just the main effects, otherwise
    the null model estimates 0 for all natural parameters.}
+\item{rank}{the rank of the Fantope matrix \code{H}}
 }
 \description{
 Dimensionality reduction for binary data by extending Pearson's

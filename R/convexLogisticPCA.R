@@ -40,7 +40,8 @@
 #' \item{prop_deviance_expl}{the proportion of deviance explained by this model.
 #'    If \code{main_effects = TRUE}, the null model is just the main effects, otherwise
 #'    the null model estimates 0 for all natural parameters.}
-#'
+#' \item{rank}{the rank of the Fantope matrix \code{H}}
+#' 
 #' @references 
 #' Landgraf, A.J. & Lee, Y., 2015. Dimensionality reduction for binary data through 
 #' the projection of natural parameters. arXiv preprint arXiv:1510.06112.
@@ -120,21 +121,23 @@ convexLogisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FA
   }
 
   if (!missing(start_H)) {
-    HU = project.Fantope(start_H, k)
+    HU = project.Fantope(start_H, k, partial_decomp = partial_decomp)
     H = HU$H
   } else if (random_start) {
     U = matrix(rnorm(d * d), d, d)
     U = qr.Q(qr(U))
-    HU = project.Fantope(U %*% t(U), k)
+    HU = project.Fantope(U %*% t(U), k, partial_decomp = partial_decomp)
     H = HU$H
   } else {
     if (partial_decomp) {
-      udv = rARPACK::svds(scale(q, center = main_effects, scale = F), k = k)
+      udv = rARPACK::svds(scale(q, center = main_effects, scale = F), k = ceiling(k))
     } else {
-      udv = svd(scale(q, center = main_effects, scale = F), nu = k, nv = k)
+      udv = svd(scale(q, center = main_effects, scale = F), nu = ceiling(k), nv = ceiling(k))
     }
-    HU = project.Fantope(udv$v[, 1:k] %*% t(udv$v[, 1:k]), k)
-    H = HU$H
+    H = tcrossprod(udv$v[, 1:ceiling(k), drop = FALSE])
+    HU = list(H = H,
+         U = udv$v[, 1:ceiling(k), drop = FALSE],
+         rank = ceiling(k))
   }
 
   mu_mat = outer(rep(1, n), mu)
@@ -178,7 +181,7 @@ convexLogisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FA
     deriv = deriv + t(deriv) - diag(diag(deriv))
 
     H = y + step * deriv
-    HU = project.Fantope(H, k)
+    HU = project.Fantope(H, k, partial_decomp = partial_decomp)
     H = HU$H
 
     theta = mu_mat + eta_centered %*% H
@@ -223,7 +226,8 @@ convexLogisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FA
                 iters = i,
                 loss_trace = loss_trace[1:(i + 1)],
                 proj_loss_trace = proj_loss_trace[1:(i + 1)],
-                prop_deviance_expl = 1 - best_loglike / null_loglike)
+                prop_deviance_expl = 1 - best_loglike / null_loglike,
+                rank = best_HU$rank)
   class(object) <- "clpca"
   return(object)
 }
@@ -245,11 +249,21 @@ convexLogisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FA
 #' @export
 project.Fantope <- function(x, k, partial_decomp = FALSE) {
   if (partial_decomp) {
+    if (!requireNamespace("rARPACK", quietly = TRUE)) {
+      message("rARPACK must be installed to use partial_decomp")
+      partial_decomp = FALSE
+    }
+  }
+  
+  d = ncol(x)
+  
+  if (partial_decomp) {
     eig = eigen(x, symmetric = TRUE, only.values = TRUE)
   } else {
     eig = eigen(x, symmetric = TRUE)
   }
   vals = eig$values
+  
   if (sum(pmin(1, eig$values)) < k) {
     warning("k is larger than the rank of x")
   }
@@ -271,7 +285,7 @@ project.Fantope <- function(x, k, partial_decomp = FALSE) {
   
   if (partial_decomp & num_vals < d) {
     # do a partial decomposition of between k and number of non-zero values (plus a buffer)
-    eig = rARPACK::eigs_sym(x, k = max(min(num_vals + 1, ncol(x)), ceiling(k)))
+    eig = rARPACK::eigs_sym(x, k = max(min(num_vals + 1, d), ceiling(k)))
   }
   # if rARPACK gave a bad result or the number of non-zero e-vals = d
   if (!partial_decomp || num_vals == d || any(eig$values[1:num_vals] < 0)) {
