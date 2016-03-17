@@ -170,4 +170,30 @@ Now, we can use the models we fit before to estimate the PC scores of these cong
 predict(logpca_model, votes_fake, type = "PCs")
 ```
 
+## Large Data
+
+Since logistic PCA requires iteratively computing the eigendecomposition, it can be slow for large data. When `k` is small relative to the number of columns, however, the eigendecomposition can be sped up by only solving for the first `k` eigenvectors. This can be done for all three methods using the `partial_decomp` argument. We have implemented this using the `rARPACK` package. Be careful when using this argument, because it can substantially slow down computation is the number of columns is small (e.g. ~20) or if `k` is of comparable size to the number of columns. An example of the speed-up is below.
+
+```{r large}
+set.seed(33)
+nrow = 100
+ncol = 500
+sim_dat = matrix(sample(c(0, 1), nrow * ncol, replace = TRUE), nrow, ncol)
+
+ptm1 <- proc.time()
+logpca_slow = logisticPCA(sim_dat, k = 2, m = 4, partial_decomp = FALSE)
+elapsed1 = proc.time() - ptm1
+
+ptm2 <- proc.time()
+logpca_fast = logisticPCA(sim_dat, k = 2, m = 4, partial_decomp = TRUE)
+elapsed2 = proc.time() - ptm2
+```
+
+Without doing partial eigendecompositions, it took `r round(elapsed1[["elapsed"]], 1)` seconds to run and with partial it took `r round(elapsed2[["elapsed"]], 1)` seconds. 
+
+We can also compare the results of the two versions to make sure they match. The code below confirms that the projection matrices are the same. Note that the ordering of the columns in the `U` matrix does not matter.
+
+```{r fast_same}
+all.equal(tcrossprod(logpca_slow$U), tcrossprod(logpca_fast$U))
+```
 
