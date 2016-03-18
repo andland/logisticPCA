@@ -172,7 +172,7 @@ predict(logpca_model, votes_fake, type = "PCs")
 
 ## Large Data
 
-Since logistic PCA requires iteratively computing the eigendecomposition, it can be slow for large data. When `k` is small relative to the number of columns, however, the eigendecomposition can be sped up by only solving for the first `k` eigenvectors. This can be done for all three methods using the `partial_decomp` argument. We have implemented this using the `rARPACK` package. Be careful when using this argument, because it can substantially slow down computation is the number of columns is small (e.g. ~20) or if `k` is of comparable size to the number of columns. An example of the speed-up is below.
+Since logistic PCA requires iteratively computing the eigendecomposition, it can be slow for large data. When `k` is small relative to the number of columns, however, the eigendecomposition can be sped up by only solving for the first `k` eigenvectors. This can be done for all three formulations using the `partial_decomp` argument. We have implemented this using the `rARPACK` package. Be careful when using this argument, because it can substantially slow down computation is the number of columns is small (e.g. ~20) or if `k` is of comparable size to the number of columns. An example of the speed-up is below.
 
 ```{r large}
 set.seed(33)
