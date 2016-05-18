@@ -90,6 +90,15 @@ test_that("k = 1 CLPCA", {
   expect_equal(dim(pred3r), c(rows, cols))
 })
 
+test_that("partial_decomp = full decomp", {
+  expect_equal(lpca$iters, lpca_part$iters)
+  expect_equal(lsvd$iters, lsvd_part$iters)
+  expect_equal(clpca$iters, clpca_part$iters)
+  
+  expect_equal(lpca$loss_trace, lpca_part$loss_trace)
+  expect_equal(lsvd$loss_trace, lsvd_part$loss_trace)
+  expect_equal(clpca$loss_trace, clpca_part$loss_trace)
+})
 
 rm(lsvd, lpca, clpca, pred1, pred1l, pred1r, pred2, pred2l, pred2r,
    pred3, pred3l, pred3r, fit1l, fit1r, fit2l, fit2r)
