@@ -9,7 +9,7 @@
 #' @param k number of principal components to return
 #' @param m value to approximate the saturated model
 #' @param quiet logical; whether the calculation should give feedback
-#' @param partial_decomp logical; if \code{TRUE}, the function uses the rARPACK package
+#' @param partial_decomp logical; if \code{TRUE}, the function uses the RSpectra package
 #'   to quickly initialize \code{H} and project onto the Fantope when \code{ncol(x)} 
 #'   is large and \code{k} is small
 #' @param max_iters number of maximum iterations
@@ -68,8 +68,8 @@ convexLogisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FA
             "Using m = ", m)
   }
   if (partial_decomp) {
-    if (!requireNamespace("rARPACK", quietly = TRUE)) {
-      message("rARPACK must be installed to use partial_decomp")
+    if (!requireNamespace("RSpectra", quietly = TRUE)) {
+      message("RSpectra must be installed to use partial_decomp")
       partial_decomp = FALSE
     }
   }
@@ -130,7 +130,7 @@ convexLogisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FA
     H = HU$H
   } else {
     if (partial_decomp) {
-      udv = rARPACK::svds(scale(q, center = main_effects, scale = F), k = ceiling(k))
+      udv = RSpectra::svds(scale(q, center = main_effects, scale = F), k = ceiling(k))
     } else {
       udv = svd(scale(q, center = main_effects, scale = F), nu = ceiling(k), nv = ceiling(k))
     }
@@ -239,7 +239,7 @@ convexLogisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FA
 #'
 #' @param x a symmetric matrix
 #' @param k the rank of the Fantope desired
-#' @param partial_decomp logical; if \code{TRUE}, the function uses the rARPACK package
+#' @param partial_decomp logical; if \code{TRUE}, the function uses the RSpectra package
 #'   to quickly calculate the eigendecomposition when \code{ncol(x)} is large and \code{k} is small
 #'
 #' @return
@@ -249,8 +249,8 @@ convexLogisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FA
 #' @export
 project.Fantope <- function(x, k, partial_decomp = FALSE) {
   if (partial_decomp) {
-    if (!requireNamespace("rARPACK", quietly = TRUE)) {
-      message("rARPACK must be installed to use partial_decomp")
+    if (!requireNamespace("RSpectra", quietly = TRUE)) {
+      message("RSpectra must be installed to use partial_decomp")
       partial_decomp = FALSE
     }
   }
@@ -285,9 +285,9 @@ project.Fantope <- function(x, k, partial_decomp = FALSE) {
   
   if (partial_decomp & num_vals < d) {
     # do a partial decomposition of between k and number of non-zero values (plus a buffer)
-    eig = rARPACK::eigs_sym(x, k = max(min(num_vals + 1, d), ceiling(k)))
+    eig = RSpectra::eigs_sym(x, k = max(min(num_vals + 1, d), ceiling(k)))
   }
-  # if rARPACK gave a bad result or the number of non-zero e-vals = d
+  # if RSpectra gave a bad result or the number of non-zero e-vals = d
   if (!partial_decomp || num_vals == d || any(eig$values[1:num_vals] < 0)) {
     if (partial_decomp) {
       eig = eigen(x, symmetric = TRUE)

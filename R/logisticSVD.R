@@ -7,7 +7,7 @@
 #' @param x matrix with all binary entries
 #' @param k rank of the SVD
 #' @param quiet logical; whether the calculation should give feedback
-#' @param partial_decomp logical; if \code{TRUE}, the function uses the rARPACK package
+#' @param partial_decomp logical; if \code{TRUE}, the function uses the RSpectra package
 #'   to more quickly calculate the SVD. When the number of columns is small, 
 #'   the approximation may be less accurate and slower
 #' @param max_iters number of maximum iterations
@@ -69,8 +69,8 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
             "Using partial_decomp = ", partial_decomp)
   }
   if (partial_decomp) {
-    if (!requireNamespace("rARPACK", quietly = TRUE)) {
-      message("rARPACK must be installed to use partial_decomp")
+    if (!requireNamespace("RSpectra", quietly = TRUE)) {
+      message("RSpectra must be installed to use partial_decomp")
       partial_decomp = FALSE
     }
   }
@@ -97,7 +97,7 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
     if (missing(start_A) | missing(start_B)) {
       if (!quiet) {cat("Initializing SVD... ")}
       if (partial_decomp) {
-        udv = rARPACK::svds(scale(4 * q, center = main_effects, scale = FALSE), k = k)
+        udv = RSpectra::svds(scale(4 * q, center = main_effects, scale = FALSE), k = k)
       } else {
         udv = svd(scale(4 * q, center = main_effects, scale = FALSE))
       }
@@ -143,7 +143,7 @@ logisticSVD <- function(x, k = 2, quiet = TRUE, max_iters = 1000, conv_criteria 
     }
     
     if (partial_decomp) {
-      udv = rARPACK::svds(scale(Z, center = main_effects, scale = FALSE), min(k + 1, d))
+      udv = RSpectra::svds(scale(Z, center = main_effects, scale = FALSE), min(k + 1, d))
     } else {
       udv = svd(scale(Z, center = main_effects, scale = FALSE))
     }

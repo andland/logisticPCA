@@ -11,7 +11,7 @@ project.Fantope(x, k, partial_decomp = FALSE)
 
 \item{k}{the rank of the Fantope desired}
 
-\item{partial_decomp}{logical; if \code{TRUE}, the function uses the rARPACK package
+\item{partial_decomp}{logical; if \code{TRUE}, the function uses the RSpectra package
 to quickly calculate the eigendecomposition when \code{ncol(x)} is large and \code{k} is small}
 }
 \value{

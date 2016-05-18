@@ -29,7 +29,7 @@ algorithm will use an SVD as starting value}
 
 \item{start_mu}{starting value for mu. Only used if \code{main_effects = TRUE}}
 
-\item{partial_decomp}{logical; if \code{TRUE}, the function uses the rARPACK package
+\item{partial_decomp}{logical; if \code{TRUE}, the function uses the RSpectra package
 to more quickly calculate the SVD. When the number of columns is small, 
 the approximation may be less accurate and slower}
 

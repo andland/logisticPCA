@@ -17,7 +17,7 @@ convexLogisticPCA(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FALSE,
 
 \item{quiet}{logical; whether the calculation should give feedback}
 
-\item{partial_decomp}{logical; if \code{TRUE}, the function uses the rARPACK package
+\item{partial_decomp}{logical; if \code{TRUE}, the function uses the RSpectra package
 to quickly initialize \code{H} and project onto the Fantope when \code{ncol(x)} 
 is large and \code{k} is small}
 

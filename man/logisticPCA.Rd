@@ -17,7 +17,7 @@ logisticPCA(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FALSE,
 
 \item{quiet}{logical; whether the calculation should give feedback}
 
-\item{partial_decomp}{logical; if \code{TRUE}, the function uses the rARPACK package
+\item{partial_decomp}{logical; if \code{TRUE}, the function uses the RSpectra package
 to more quickly calculate the eigen-decomposition. This is usually faster than standard
 eigen-decomponsition when \code{ncol(x) > 100} and \code{k} is small}
 

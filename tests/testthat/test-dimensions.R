@@ -13,6 +13,10 @@ lpca = logisticPCA(mat, k = k, m = 4, main_effects = FALSE)
 lsvd = logisticSVD(mat, k = k, main_effects = FALSE, conv_criteria = 1e-4, partial_decomp = FALSE)
 clpca = convexLogisticPCA(mat, m = 4, k = k, main_effects = FALSE)
 
+lpca_part = logisticPCA(mat, k = k, m = 4, main_effects = FALSE, partial_decomp = TRUE)
+lsvd_part = logisticSVD(mat, k = k, main_effects = FALSE, conv_criteria = 1e-4, partial_decomp = TRUE)
+clpca_part = convexLogisticPCA(mat, m = 4, k = k, main_effects = FALSE, partial_decomp = TRUE)
+
 pred1 = predict(lpca, mat)
 pred1l = predict(lpca, mat, type = "link")
 pred1r = predict(lpca, mat, type = "response")

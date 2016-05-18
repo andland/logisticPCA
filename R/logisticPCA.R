@@ -9,7 +9,7 @@
 #' @param m value to approximate the saturated model. If \code{m = 0}, m is solved for
 #' @param quiet logical; whether the calculation should give feedback
 #' @param max_iters number of maximum iterations
-#' @param partial_decomp logical; if \code{TRUE}, the function uses the rARPACK package
+#' @param partial_decomp logical; if \code{TRUE}, the function uses the RSpectra package
 #'   to more quickly calculate the eigen-decomposition. This is usually faster than standard
 #'   eigen-decomponsition when \code{ncol(x) > 100} and \code{k} is small
 #' @param conv_criteria convergence criteria. The difference between average deviance
@@ -73,8 +73,8 @@ logisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FALSE,
             "Using partial_decomp = ", partial_decomp)
   }
   if (partial_decomp) {
-    if (!requireNamespace("rARPACK", quietly = TRUE)) {
-      message("rARPACK must be installed to use partial_decomp")
+    if (!requireNamespace("RSpectra", quietly = TRUE)) {
+      message("RSpectra must be installed to use partial_decomp")
       partial_decomp = FALSE
     }
   }
@@ -125,7 +125,7 @@ logisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FALSE,
     U = qr.Q(qr(U))
   } else {
     if (partial_decomp) {
-      udv = rARPACK::svds(scale(q, center = main_effects, scale = FALSE), k = k)
+      udv = RSpectra::svds(scale(q, center = main_effects, scale = FALSE), k = k)
     } else {
       udv = svd(scale(q, center = main_effects, scale = FALSE))
     }
@@ -180,16 +180,16 @@ logisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FALSE,
     mat_temp = crossprod(scale(eta, center = mu, scale = FALSE), Z)
     mat_temp = mat_temp + t(mat_temp) - crossprod(eta) + n * outer(mu, mu)
 
-    # rARPACK could give poor estimates of e-vectors
+    # RSpectra could give poor estimates of e-vectors
     # so I switch to standard eigen if it does
     repeat {
       if (partial_decomp) {
-        eig = rARPACK::eigs_sym(mat_temp, k = min(k + 2, d))
+        eig = RSpectra::eigs_sym(mat_temp, k = min(k + 2, d))
       }
       if (!partial_decomp || any(eig$values[1:k] < 0)) {
         eig = eigen(mat_temp, symmetric = TRUE)
         if (!quiet & partial_decomp) {
-          cat("rARPACK::eigs_sym returned negative values.\n")
+          cat("RSpectra::eigs_sym returned negative values.\n")
         }
       }
       U = matrix(eig$vectors[, 1:k], d, k)
@@ -202,7 +202,7 @@ logisticPCA <- function(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FALSE,
         break
       } else {
         partial_decomp = FALSE
-        warning("rARPACK::eigs_sym was too inaccurate in iteration ", i , ". Switched to base::eigen")
+        warning("RSpectra::eigs_sym was too inaccurate in iteration ", i , ". Switched to base::eigen")
       }
     }
 
