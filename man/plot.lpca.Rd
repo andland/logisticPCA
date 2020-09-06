@@ -35,4 +35,3 @@ lpca = logisticPCA(mat, k = 2, m = 4, main_effects = FALSE)
 plot(lpca)
 }
 }
-

@@ -4,9 +4,22 @@
 \alias{convexLogisticPCA}
 \title{Convex Logistic Principal Component Analysis}
 \usage{
-convexLogisticPCA(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FALSE,
-  max_iters = 1000, conv_criteria = 1e-06, random_start = FALSE, start_H,
-  mu, main_effects = TRUE, ss_factor = 4, weights, M)
+convexLogisticPCA(
+  x,
+  k = 2,
+  m = 4,
+  quiet = TRUE,
+  partial_decomp = FALSE,
+  max_iters = 1000,
+  conv_criteria = 1e-06,
+  random_start = FALSE,
+  start_H,
+  mu,
+  main_effects = TRUE,
+  ss_factor = 4,
+  weights,
+  M
+)
 }
 \arguments{
 \item{x}{matrix with all binary entries}

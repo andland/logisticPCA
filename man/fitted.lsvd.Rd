@@ -33,4 +33,3 @@ lsvd = logisticSVD(mat, k = 1, main_effects = FALSE, partial_decomp = FALSE)
 # construct fitted probability matrix
 fit = fitted(lsvd, type = "response")
 }
-

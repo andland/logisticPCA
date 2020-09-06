@@ -4,9 +4,11 @@
 \name{house_votes84}
 \alias{house_votes84}
 \title{United States Congressional Voting Records 1984}
-\format{A matrix with all binary or missing entries. There are 435 rows corresponding
+\format{
+A matrix with all binary or missing entries. There are 435 rows corresponding
 members of congress and 16 columns representing the bills being voted on. The row 
-names refer to the political party of the members of congress}
+names refer to the political party of the members of congress
+}
 \source{
 Congressional Quarterly Almanac, 98th Congress, 
 2nd session 1984, Volume XL: Congressional Quarterly Inc., 
@@ -35,4 +37,3 @@ data(house_votes84)
 congress_lpca = logisticPCA(house_votes84, k = 2, m = 4)
 }
 \keyword{datasets}
-

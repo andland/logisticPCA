@@ -22,4 +22,3 @@ library to matrices
 (mat = matrix(rnorm(10 * 5), nrow = 10, ncol = 5))
 inv.logit.mat(mat)
 }
-

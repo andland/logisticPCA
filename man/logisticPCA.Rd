@@ -4,9 +4,22 @@
 \alias{logisticPCA}
 \title{Logistic Principal Component Analysis}
 \usage{
-logisticPCA(x, k = 2, m = 4, quiet = TRUE, partial_decomp = FALSE,
-  max_iters = 1000, conv_criteria = 1e-05, random_start = FALSE, start_U,
-  start_mu, main_effects = TRUE, validation, M, use_irlba)
+logisticPCA(
+  x,
+  k = 2,
+  m = 4,
+  quiet = TRUE,
+  partial_decomp = FALSE,
+  max_iters = 1000,
+  conv_criteria = 1e-05,
+  random_start = FALSE,
+  start_U,
+  start_mu,
+  main_effects = TRUE,
+  validation,
+  M,
+  use_irlba
+)
 }
 \arguments{
 \item{x}{matrix with all binary entries}

@@ -18,4 +18,3 @@ same dimensions as x}
 \description{
 Calculate the Bernoulli log likelihood of matrix
 }
-

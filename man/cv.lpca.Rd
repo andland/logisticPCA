@@ -44,4 +44,3 @@ negloglikes = cv.lpca(mat, ks = 1:9, ms = 3:6)
 plot(negloglikes)
 }
 }
-

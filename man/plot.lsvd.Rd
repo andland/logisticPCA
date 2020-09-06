@@ -35,4 +35,3 @@ lsvd = logisticSVD(mat, k = 2, main_effects = FALSE, partial_decomp = FALSE)
 plot(lsvd)
 }
 }
-

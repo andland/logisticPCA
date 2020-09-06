@@ -22,4 +22,3 @@ to quickly calculate the eigendecomposition when \code{ncol(x)} is large and \co
 \description{
 Project a symmetric matrix onto the convex set of the rank k Fantope
 }
-

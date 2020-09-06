@@ -33,4 +33,3 @@ lpca = logisticPCA(mat, k = 1, m = 4, main_effects = FALSE)
 # construct fitted probability matrix
 fit = fitted(lpca, type = "response")
 }
-

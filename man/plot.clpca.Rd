@@ -35,4 +35,3 @@ clpca = convexLogisticPCA(mat, k = 2, m = 4, main_effects = FALSE)
 plot(clpca)
 }
 }
-

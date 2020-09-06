@@ -4,9 +4,20 @@
 \alias{logisticSVD}
 \title{Logistic Singular Value Decomposition}
 \usage{
-logisticSVD(x, k = 2, quiet = TRUE, max_iters = 1000,
-  conv_criteria = 1e-05, random_start = FALSE, start_A, start_B, start_mu,
-  partial_decomp = TRUE, main_effects = TRUE, use_irlba)
+logisticSVD(
+  x,
+  k = 2,
+  quiet = TRUE,
+  max_iters = 1000,
+  conv_criteria = 1e-05,
+  random_start = FALSE,
+  start_A,
+  start_B,
+  start_mu,
+  partial_decomp = TRUE,
+  main_effects = TRUE,
+  use_irlba
+)
 }
 \arguments{
 \item{x}{matrix with all binary entries}
@@ -80,4 +91,3 @@ by iterated singular value decomposition. Computational Statistics & Data Analys
 Collins, M., Dasgupta, S., & Schapire, R. E., 2001. A generalization of principal 
 components analysis to the exponential family. In NIPS, 617--624.
 }
-

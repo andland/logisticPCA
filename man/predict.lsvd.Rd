@@ -4,9 +4,17 @@
 \alias{predict.lsvd}
 \title{Predict Logistic SVD left singular values or reconstruction on new data}
 \usage{
-\method{predict}{lsvd}(object, newdata, quiet = TRUE, max_iters = 1000,
-  conv_criteria = 1e-05, random_start = FALSE, start_A, type = c("PCs",
-  "link", "response"), ...)
+\method{predict}{lsvd}(
+  object,
+  newdata,
+  quiet = TRUE,
+  max_iters = 1000,
+  conv_criteria = 1e-05,
+  random_start = FALSE,
+  start_A,
+  type = c("PCs", "link", "response"),
+  ...
+)
 }
 \arguments{
 \item{object}{logistic SVD object}
@@ -58,4 +66,3 @@ lsvd = logisticSVD(mat, k = 1, main_effects = FALSE, partial_decomp = FALSE)
 
 A_new = predict(lsvd, mat_new)
 }
-

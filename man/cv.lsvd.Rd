@@ -39,4 +39,3 @@ negloglikes = cv.lsvd(mat, ks = 1:9)
 plot(negloglikes)
 }
 }
-

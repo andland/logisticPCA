@@ -4,8 +4,7 @@
 \alias{predict.clpca}
 \title{Predict Convex Logistic PCA scores or reconstruction on new data}
 \usage{
-\method{predict}{clpca}(object, newdata, type = c("PCs", "link", "response"),
-  ...)
+\method{predict}{clpca}(object, newdata, type = c("PCs", "link", "response"), ...)
 }
 \arguments{
 \item{object}{convex logistic PCA object}
@@ -40,4 +39,3 @@ clpca = convexLogisticPCA(mat, k = 1, m = 4, main_effects = FALSE)
 
 PCs = predict(clpca, mat_new)
 }
-

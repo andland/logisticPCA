@@ -4,8 +4,7 @@
 \alias{predict.lpca}
 \title{Predict Logistic PCA scores or reconstruction on new data}
 \usage{
-\method{predict}{lpca}(object, newdata, type = c("PCs", "link", "response"),
-  ...)
+\method{predict}{lpca}(object, newdata, type = c("PCs", "link", "response"), ...)
 }
 \arguments{
 \item{object}{logistic PCA object}
@@ -40,4 +39,3 @@ lpca = logisticPCA(mat, k = 1, m = 4, main_effects = FALSE)
 
 PCs = predict(lpca, mat_new)
 }
-
