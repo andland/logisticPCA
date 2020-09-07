@@ -38,8 +38,10 @@
 #'    the null model estimates 0 for all natural parameters.}
 #'
 #' @references 
-#' Landgraf, A.J. & Lee, Y., 2015. Dimensionality reduction for binary data through 
-#' the projection of natural parameters. arXiv preprint arXiv:1510.06112.
+#' Landgraf, A.J. & Lee, Y., 2020. Dimensionality reduction for binary data through
+#' the projection of natural parameters. Journal of Multivariate Analysis, 180, p.104668.
+#' \url{https://arxiv.org/abs/1510.06112}
+#' \url{https://doi.org/10.1016/j.jmva.2020.104668}
 #'
 #' @examples
 #' # construct a low rank matrix in the logit scale
